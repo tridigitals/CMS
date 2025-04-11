@@ -14,10 +14,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     // User management routes
-    Route::resource('users', \App\Http\Controllers\UserController::class);
-    Route::resource('roles', \App\Http\Controllers\RoleController::class);
-    Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
-    Route::post('/users/bulk-change-role', [UserController::class, 'bulkChangeRole'])->name('users.bulkChangeRole');
+    Route::resource('users', \App\Http\Controllers\UserController::class)
+        ->middleware('can:manage users');
+    Route::resource('roles', \App\Http\Controllers\RoleController::class)
+        ->middleware('can:manage roles');
+    Route::resource('permissions', \App\Http\Controllers\PermissionController::class)
+        ->middleware('can:manage permissions');
+    Route::post('/users/bulk-change-role', [UserController::class, 'bulkChangeRole'])
+        ->middleware('can:manage users')
+        ->name('users.bulkChangeRole');
 
 });
 
