@@ -87,7 +87,7 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 ### Fase 1: Core CMS (2 minggu)
 **Minggu 1**
 - [x] Hari 1: Integrasi starter kit, setup repo, konfigurasi Vite & Tailwind
-- Hari 2: Setup autentikasi, role, permission (Spatie)
+- [x] Hari 2: Setup autentikasi, role, permission (Spatie)
 - Hari 3: CRUD User & Role, seed data role/permission
 - Hari 4: CRUD Post (model, migration, controller, React form)
 - Hari 5: CRUD Page (model, migration, controller, React form)
