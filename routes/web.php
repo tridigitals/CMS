@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -11,6 +12,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    // User management routes
+    Route::resource('users', \App\Http\Controllers\UserController::class);
+    Route::post('/users/bulk-change-role', [UserController::class, 'bulkChangeRole'])->name('users.bulkChangeRole');
+
 });
 
 require __DIR__.'/settings.php';
