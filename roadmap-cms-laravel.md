@@ -88,7 +88,9 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 **Minggu 1**
 - [x] Hari 1: Integrasi starter kit, setup repo, konfigurasi Vite & Tailwind
 - [x] Hari 2: Setup autentikasi, role, permission (Spatie)
-- Hari 3: CRUD User & Role, seed data role/permission
+- [x] Hari 3: CRUD User
+- Hari 3: CRUD Role
+- Hari 3: CRUD Permission
 - Hari 4: CRUD Post (model, migration, controller, React form)
 - Hari 5: CRUD Page (model, migration, controller, React form)
 - Hari 6: CRUD Media (Spatie MediaLibrary, React Dropzone)
