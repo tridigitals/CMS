@@ -17,18 +17,21 @@ class TagSeeder extends Seeder
         Tag::insert([
             [
                 'name' => 'Laravel',
+                'slug' => \Illuminate\Support\Str::slug('Laravel'),
                 'description' => 'Laravel framework',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'React',
+                'slug' => \Illuminate\Support\Str::slug('React'),
                 'description' => 'React library',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'API',
+                'slug' => \Illuminate\Support\Str::slug('API'),
                 'description' => 'API related',
                 'created_at' => now(),
                 'updated_at' => now(),

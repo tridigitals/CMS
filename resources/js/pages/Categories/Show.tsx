@@ -8,6 +8,7 @@ import { PageProps, BreadcrumbItem } from "@/types";
 type Category = {
   id: number;
   name: string;
+  slug: string;
   description?: string;
 };
 
@@ -44,6 +45,10 @@ const CategoryShow: React.FC<Props> = ({ category }) => {
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-500 mb-1">Category Name</label>
             <div className="text-lg font-semibold">{category.name}</div>
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-500 mb-1">Slug</label>
+            <div className="text-base">{category.slug}</div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>

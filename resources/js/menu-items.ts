@@ -1,7 +1,7 @@
 // File ini di-GENERATE OTOMATIS oleh script generate-menu.js
 // Edit manual tidak disarankan.
 
-import { LayoutGrid, Users, Shield, Settings, User } from 'lucide-react';
+import { LayoutGrid, Users, Shield, Settings, User, Tag } from 'lucide-react';
 import { NavItem } from './types';
 
 export const mainNavItems: NavItem[] = [
@@ -9,6 +9,24 @@ export const mainNavItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutGrid,
+  },
+  {
+    title: 'Post Management',
+    icon: LayoutGrid,
+    children: [
+      {
+        title: 'Categories',
+        href: '/categories',
+        icon: LayoutGrid,
+        permission: 'manage posts',
+      },
+      {
+        title: 'Tags',
+        href: '/tags',
+        icon: Tag,
+        permission: 'manage posts',
+      },
+    ],
   },
   {
     title: 'Account Management',
@@ -34,4 +52,5 @@ export const mainNavItems: NavItem[] = [
       },
     ],
   },
+  
 ];

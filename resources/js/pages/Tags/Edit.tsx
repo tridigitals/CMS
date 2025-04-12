@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,8 @@ import AppLayout from "@/layouts/app-layout";
 type Tag = {
   id: number;
   name: string;
-  description?: string;
+  slug: string;
+  type?: string;
 };
 
 interface Props extends PageProps {
@@ -21,11 +22,49 @@ const breadcrumbs = (tagName: string): BreadcrumbItem[] => [
   { title: `Edit: ${tagName}`, href: "#" },
 ];
 
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+}
+
 const TagsEdit: React.FC<Props> = ({ tag }) => {
+  // Handle Spatie Tags: name and slug can be string or object (translations)
+  const getString = (val: any) =>
+    typeof val === "string"
+      ? val
+      : val && typeof val === "object"
+      ? val["en"] || Object.values(val)[0] || ""
+      : "";
+
   const { data, setData, put, processing, errors } = useForm({
-    name: tag.name,
-    description: tag.description || "",
+    name: getString(tag.name),
+    slug: getString(tag.slug),
+    type: tag.type || "",
   });
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setData("name", name);
+    if (!isSlugEdited) {
+      setData("slug", slugify(name));
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setData("slug", e.target.value);
+    setIsSlugEdited(true);
+  };
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setData("type", e.target.value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +89,7 @@ const TagsEdit: React.FC<Props> = ({ tag }) => {
                 type="text"
                 className="w-full border rounded px-3 py-2"
                 value={data.name}
-                onChange={(e) => setData("name", e.target.value)}
+                onChange={handleNameChange}
                 required
               />
               {errors.name && (
@@ -58,15 +97,31 @@ const TagsEdit: React.FC<Props> = ({ tag }) => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>
-              <textarea
+              <label className="block text-sm font-medium text-gray-500 mb-1">Slug</label>
+              <input
+                type="text"
                 className="w-full border rounded px-3 py-2"
-                value={data.description}
-                onChange={(e) => setData("description", e.target.value)}
-                rows={3}
+                value={data.slug}
+                onChange={handleSlugChange}
+                required
               />
-              {errors.description && (
-                <div className="text-red-500 text-sm mt-1">{errors.description}</div>
+              {errors.slug && (
+                <div className="text-red-500 text-sm mt-1">{errors.slug}</div>
+              )}
+              <div className="text-xs text-gray-400 mt-1">
+                Slug otomatis dari nama, tapi bisa diubah manual.
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">Type (optional)</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={data.type}
+                onChange={handleTypeChange}
+              />
+              {errors.type && (
+                <div className="text-red-500 text-sm mt-1">{errors.type}</div>
               )}
             </div>
             <div className="flex justify-between items-center mt-8">

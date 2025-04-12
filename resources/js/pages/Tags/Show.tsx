@@ -8,7 +8,10 @@ import { PageProps, BreadcrumbItem } from "@/types";
 type Tag = {
   id: number;
   name: string;
-  description?: string;
+  slug: string;
+  type?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 interface Props extends PageProps {
@@ -22,9 +25,17 @@ const breadcrumbs = (tagName: string): BreadcrumbItem[] => [
 ];
 
 const TagShow: React.FC<Props> = ({ tag }) => {
+  // Helper to get string from Spatie translatable (string or object)
+  const getString = (val: any) =>
+    typeof val === "string"
+      ? val
+      : val && typeof val === "object"
+      ? val["en"] || Object.values(val)[0] || ""
+      : "";
+
   return (
-    <AppLayout breadcrumbs={breadcrumbs(tag.name)}>
-      <Head title={`Tag: ${tag.name}`} />
+    <AppLayout breadcrumbs={breadcrumbs(getString(tag.name))}>
+      <Head title={`Tag: ${getString(tag.name)}`} />
       <div className="flex justify-center items-center min-h-[calc(100vh-120px)]">
         <Card className="w-full max-w-xl shadow-lg p-10">
           <div className="flex items-center gap-3 mb-8">
@@ -43,11 +54,15 @@ const TagShow: React.FC<Props> = ({ tag }) => {
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-500 mb-1">Tag Name</label>
-            <div className="text-lg font-semibold">{tag.name}</div>
+            <div className="text-lg font-semibold">{getString(tag.name)}</div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>
-            <div className="text-base">{tag.description || "-"}</div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-500 mb-1">Slug</label>
+            <div className="text-base">{getString(tag.slug)}</div>
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-500 mb-1">Type</label>
+            <div className="text-base">{tag.type || "-"}</div>
           </div>
         </Card>
       </div>

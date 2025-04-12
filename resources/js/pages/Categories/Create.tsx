@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,11 +13,37 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: "Add Category", href: "#" },
 ];
 
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+}
+
 const CategoriesCreate: React.FC<Props> = () => {
   const { data, setData, post, processing, errors } = useForm({
     name: "",
+    slug: "",
     description: "",
   });
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setData("name", name);
+    if (!isSlugEdited) {
+      setData("slug", slugify(name));
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setData("slug", e.target.value);
+    setIsSlugEdited(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +68,28 @@ const CategoriesCreate: React.FC<Props> = () => {
                 type="text"
                 className="w-full border rounded px-3 py-2"
                 value={data.name}
-                onChange={(e) => setData("name", e.target.value)}
+                onChange={handleNameChange}
                 required
               />
               {errors.name && (
                 <div className="text-red-500 text-sm mt-1">{errors.name}</div>
               )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">Slug</label>
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={data.slug}
+                onChange={handleSlugChange}
+                required
+              />
+              {errors.slug && (
+                <div className="text-red-500 text-sm mt-1">{errors.slug}</div>
+              )}
+              <div className="text-xs text-gray-400 mt-1">
+                Slug otomatis dari nama, tapi bisa diubah manual.
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>

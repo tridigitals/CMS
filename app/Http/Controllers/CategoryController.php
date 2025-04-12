@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -36,6 +37,8 @@ class CategoryController extends Controller
             'name' => 'required|string|unique:categories,name',
             'description' => 'nullable|string',
         ]);
+
+        $validated['slug'] = Str::slug($validated['name']);
 
         Category::create($validated);
 
@@ -73,6 +76,8 @@ class CategoryController extends Controller
             'name' => 'required|string|unique:categories,name,' . $id,
             'description' => 'nullable|string',
         ]);
+
+        $validated['slug'] = Str::slug($validated['name']);
 
         $category = Category::findOrFail($id);
         $category->update($validated);

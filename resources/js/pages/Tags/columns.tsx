@@ -8,8 +8,8 @@ import Swal, { SweetAlertResult } from 'sweetalert2';
 
 export type Tag = {
   id: number;
-  name: string;
-  description?: string;
+  name: string | { [key: string]: string };
+  type?: string;
 };
 
 export function getTagColumns(): ColumnDef<Tag>[] {
@@ -26,17 +26,17 @@ export function getTagColumns(): ColumnDef<Tag>[] {
       accessorKey: "name",
       header: "Tag Name",
       enableSorting: true,
-      cell: ({ row }) => (
-        <span className="font-medium w-full block">{row.original.name}</span>
-      ),
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="w-full block">{row.original.description || "-"}</span>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.name;
+        // Handle Spatie Tags: name can be string or object (translations)
+        const displayName =
+          typeof name === "string"
+            ? name
+            : name && typeof name === "object"
+            ? name["en"] || Object.values(name)[0]
+            : "";
+        return <span className="font-medium w-full block">{displayName}</span>;
+      },
     },
     {
       id: "actions",

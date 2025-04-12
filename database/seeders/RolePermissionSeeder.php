@@ -7,14 +7,27 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
+        // Truncate existing roles and permissions
+        DB::table('roles')->delete();
+        DB::table('permissions')->delete();
+        // Recreate the roles and permissions tables
+        // This is optional, but it ensures that the tables are clean
+        // and ready for new data.
+        // You can comment this out if you want to keep existing data
+        // DB::table('roles')->truncate();
+        // DB::table('permissions')->truncate();
         // Permissions
         $permissions = [
             'manage users',
+            'manage roles',
+            'manage permissions',
             'manage posts',
             'manage pages',
             'manage media',

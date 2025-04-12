@@ -18,18 +18,21 @@ class CategorySeeder extends Seeder
         Category::insert([
             [
                 'name' => 'Technology',
+                'slug' => \Illuminate\Support\Str::slug('Technology'),
                 'description' => 'All about tech',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Health',
+                'slug' => \Illuminate\Support\Str::slug('Health'),
                 'description' => 'Health and wellness',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Education',
+                'slug' => \Illuminate\Support\Str::slug('Education'),
                 'description' => 'Education topics',
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Tag;
+use Spatie\Tags\Tag;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class TagController extends Controller
 {
@@ -34,10 +35,15 @@ class TagController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:tags,name',
-            'description' => 'nullable|string',
+            'slug' => 'required|string|unique:tags,slug',
+            'type' => 'nullable|string',
         ]);
 
-        Tag::create($validated);
+        $tag = Tag::create([
+            'name' => $validated['name'],
+            'slug' => $validated['slug'],
+            'type' => $validated['type'] ?? null,
+        ]);
 
         return redirect()->route('tags.index')->with('success', 'Tag created successfully.');
     }
@@ -71,11 +77,15 @@ class TagController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:tags,name,' . $id,
-            'description' => 'nullable|string',
+            'slug' => 'required|string|unique:tags,slug,' . $id,
+            'type' => 'nullable|string',
         ]);
 
         $tag = Tag::findOrFail($id);
-        $tag->update($validated);
+        $tag->name = $validated['name'];
+        $tag->slug = $validated['slug'];
+        $tag->type = $validated['type'] ?? null;
+        $tag->save();
 
         return redirect()->route('tags.index')->with('success', 'Tag updated successfully.');
     }
