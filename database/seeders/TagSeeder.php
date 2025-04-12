@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Tag;
+use Spatie\Tags\Tag;
+use Illuminate\Support\Facades\DB;
 
 class TagSeeder extends Seeder
 {
@@ -13,29 +13,18 @@ class TagSeeder extends Seeder
      */
     public function run(): void
     {
-        Tag::truncate();
-        Tag::insert([
-            [
-                'name' => 'Laravel',
-                'slug' => \Illuminate\Support\Str::slug('Laravel'),
-                'description' => 'Laravel framework',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'React',
-                'slug' => \Illuminate\Support\Str::slug('React'),
-                'description' => 'React library',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'API',
-                'slug' => \Illuminate\Support\Str::slug('API'),
-                'description' => 'API related',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        DB::table('tags')->delete();
+
+        Tag::create([
+            'name' => 'Laravel',
+        ]);
+
+        Tag::create([
+            'name' => 'React',
+        ]);
+
+        Tag::create([
+            'name' => 'API',
         ]);
     }
 }
