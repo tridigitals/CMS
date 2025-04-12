@@ -4,33 +4,32 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Category;
-use Illuminate\Support\Facades\DB;
+use App\Models\Tag;
 
-class CategorySeeder extends Seeder
+class TagSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        DB::table('categories')->delete();
-        Category::insert([
+        Tag::truncate();
+        Tag::insert([
             [
-                'name' => 'Technology',
-                'description' => 'All about tech',
+                'name' => 'Laravel',
+                'description' => 'Laravel framework',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Health',
-                'description' => 'Health and wellness',
+                'name' => 'React',
+                'description' => 'React library',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Education',
-                'description' => 'Education topics',
+                'name' => 'API',
+                'description' => 'API related',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
