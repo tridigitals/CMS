@@ -79,6 +79,18 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 - Security: 2FA, rate limiting, audit log
 - Backup & restore
 - Performance & cache management
+- Spatie Media Library integration for media management
+- Slugs for SEO-friendly URLs
+- Meta descriptions and keywords for SEO
+- Tagging functionality using Spatie's laravel-tags
+- Support for featured images
+- WYSIWYG editor for content creation
+- Support for categories
+- Social sharing buttons
+- Support for comments
+- Sitemap generator
+- Structured data markup (Schema.org)
+- Open Graph meta tags for social media sharing
 
 ---
 
@@ -93,7 +105,19 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 - [x] Hari 3: CRUD Permission
 - [x] Hari 4: CRUD Category (model, migration, controller, React form)
 - [x] Hari 4: CRUD Tag (model, migration, controller, React form)
-- Hari 4: CRUD Post (model, migration, controller, React form)
+- Hari 4: CRUD Post (model, migration, controller, React form) dengan fitur :
+    Use Spatie's Media Library for managing media associated with posts.
+    Implement slugs for SEO-friendly URLs.
+    Add meta descriptions and keywords for SEO.
+    Implement tagging functionality using Spatie's laravel-tags.
+    Add support for featured images.
+    Implement a WYSIWYG editor for content creation.
+    Add support for categories.
+    Implement social sharing buttons.
+    Add support for comments.
+    Implement a sitemap generator.
+    Implement structured data markup (Schema.org) for better search engine understanding.
+    Implement Open Graph meta tags for social media sharing.
 - Hari 5: CRUD Page (model, migration, controller, React form)
 - Hari 6: CRUD Media (Spatie MediaLibrary, React Dropzone)
 - Hari 7: CRUD Menu & Menu Item, integrasi ke layout

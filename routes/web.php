@@ -24,6 +24,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:manage posts');
     Route::resource('tags', \App\Http\Controllers\TagController::class)
         ->middleware('can:manage posts');
+    Route::resource('posts', \App\Http\Controllers\PostController::class)
+        ->middleware('can:manage posts');
     Route::post('/users/bulk-change-role', [UserController::class, 'bulkChangeRole'])
         ->middleware('can:manage users')
         ->name('users.bulkChangeRole');
