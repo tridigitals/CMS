@@ -5,40 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Link, Head } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { DataTable } from "@/components/ui/data-table";
-import { getPermissionColumns, Permission } from "./columns";
+import { getCategoryColumns, Category } from "./columns";
 
 interface Props extends PageProps {
-  permissions: Permission[];
+  categories: Category[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Dashboard", href: "/dashboard" },
-  { title: "Permissions", href: "/permissions" },
+  { title: "Categories", href: "/categories" },
 ];
 
-const PermissionsIndex: React.FC<Props> = ({ permissions }) => {
+const CategoriesIndex: React.FC<Props> = ({ categories }) => {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Permission Management" />
+      <Head title="Category Management" />
       <div className="mt-8 mx-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Permission Management</h1>
+          <h1 className="text-2xl font-bold">Category Management</h1>
           <Link
-            href="/permissions/create"
+            href="/categories/create"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            + Add Permission
+            + Add Category
           </Link>
         </div>
         <DataTable
-          columns={getPermissionColumns()}
-          data={permissions}
+          columns={getCategoryColumns()}
+          data={categories}
           searchKey="name"
-          placeholder="Search permissions..."
+          placeholder="Search categories..."
         />
       </div>
     </AppLayout>
   );
 };
 
-export default PermissionsIndex;
+export default CategoriesIndex;

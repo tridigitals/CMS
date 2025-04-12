@@ -42,7 +42,7 @@ export function AppSidebar() {
 
     // DEBUG: log userPermissions
     // eslint-disable-next-line no-console
-    console.log('userPermissions:', userPermissions);
+    // console.log('userPermissions:', userPermissions);
 
     // Fungsi rekursif untuk filter menu dan children sesuai permission user
     function filterNavItems(items: NavItem[]): NavItem[] {
