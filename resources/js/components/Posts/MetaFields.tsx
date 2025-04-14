@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
+import debounce from 'lodash/debounce';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -29,6 +30,18 @@ interface SEOScore {
   suggestions: string[];
 }
 
+interface MediaLibraryResponse {
+  data: {
+    id: number;
+    url: string;
+    name: string;
+    created_at: string;
+  }[];
+  current_page: number;
+  last_page: number;
+  total: number;
+}
+
 const OPTIMAL_META_DESCRIPTION_LENGTH = 155;
 const MAX_META_DESCRIPTION_LENGTH = 160;
 
@@ -49,9 +62,99 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
     suggestions: []
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    onFeaturedImageChange(file);
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+  const [mediaList, setMediaList] = useState<{
+    id: number;
+    url: string;
+    name: string;
+    created_at: string;
+  }[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      await fetchMedia(1, query);
+    }, 300),
+    []
+  );
+
+  const fetchMedia = async (page: number, search: string = '') => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        route('posts.media.library', { page, search })
+      );
+      const data: MediaLibraryResponse = await res.json();
+      if (page === 1) {
+        setMediaList(data.data);
+      } else {
+        setMediaList(prev => [...prev, ...data.data]);
+      }
+      setCurrentPage(data.current_page);
+      setLastPage(data.last_page);
+      setTotalItems(data.total);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    // First, upload to media library
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      if (!csrfToken) {
+        throw new Error('CSRF token not found');
+      }
+  
+      const res = await fetch(route('posts.media.upload'), {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken
+        },
+        body: formData,
+        credentials: 'include'
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || `Upload failed with status: ${res.status}`);
+      }
+  
+      const media = await res.json();
+      
+      // Fetch the file from the URL to create a File object
+      const fileRes = await fetch(media.url);
+      if (!fileRes.ok) {
+        throw new Error('Failed to fetch uploaded file');
+      }
+  
+      const blob = await fileRes.blob();
+      const newFile = new File([blob], media.name, { type: blob.type });
+      
+      // Update media library list
+      setMediaList(prev => [media, ...prev]);
+      
+      // Set the file as featured image
+      onFeaturedImageChange(newFile);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      // Show error in UI
+      if (errors && typeof errors === 'object') {
+        errors.featured_image = error instanceof Error ? error.message : 'Failed to upload file';
+      }
+    }
   };
 
   const calculateSEOScore = () => {
@@ -236,7 +339,10 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                 {featuredImagePreview && (
                   <button
                     type="button"
-                    onClick={() => onFeaturedImageChange(null)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      onFeaturedImageChange(null);
+                    }}
                     className="text-sm text-red-500 hover:text-red-700"
                   >
                     Remove
@@ -246,6 +352,22 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
               {errors?.featured_image && (
                 <p className="text-red-500 text-sm mt-1">{errors.featured_image}</p>
               )}
+              <button
+                type="button"
+                className="mt-2 px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200"
+                onClick={async () => {
+                  setMediaModalOpen(true);
+                  if (mediaList.length === 0) {
+                    const res = await fetch(route('posts.media.library'));
+                    const data = await res.json();
+                    if (data.data) {
+                      setMediaList(data.data);
+                    }
+                  }
+                }}
+              >
+                Pilih dari Media Library
+              </button>
             </div>
           </div>
         </TabsContent>
@@ -279,6 +401,105 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal Media Library */}
+      {mediaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full h-[80vh] shadow-lg relative flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Media Library ({totalItems} items)</h3>
+              <button
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                onClick={() => setMediaModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="flex gap-4 mb-4">
+              <div className="flex-grow">
+                <Input
+                  type="search"
+                  placeholder="Search media..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    debouncedSearch(e.target.value);
+                  }}
+                  className="w-full"
+                />
+              </div>
+
+              <label htmlFor="modal-file-upload" className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                <ImagePlus className="w-4 h-4" />
+                <span>Upload</span>
+                <input
+                  type="file"
+                  id="modal-file-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </label>
+            </div>
+
+            <div
+              className="flex-grow overflow-y-auto"
+              onScroll={(e) => {
+                const target = e.target as HTMLDivElement;
+                if (
+                  target.scrollHeight - target.scrollTop === target.clientHeight &&
+                  currentPage < lastPage &&
+                  !isLoading
+                ) {
+                  fetchMedia(currentPage + 1, searchQuery);
+                }
+              }}
+            >
+              <div className="grid grid-cols-4 gap-4 p-2">
+                {mediaList.length === 0 && !isLoading ? (
+                  <div className="col-span-4 text-center py-8 text-gray-500">
+                    No images found
+                  </div>
+                ) : (
+                  mediaList.map((media) => (
+                    <div
+                      key={media.id}
+                      className="group relative aspect-square border rounded-lg overflow-hidden cursor-pointer hover:border-indigo-500 transition-all"
+                      onClick={() => {
+                        fetch(media.url)
+                          .then(res => res.blob())
+                          .then(blob => {
+                            const file = new File([blob], media.name, { type: blob.type });
+                            onFeaturedImageChange(file);
+                            setMediaModalOpen(false);
+                          });
+                      }}
+                    >
+                      <img
+                        src={media.url}
+                        alt={media.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs">
+                          {media.name}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              {isLoading && (
+                <div className="text-center py-4">
+                  Loading...
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

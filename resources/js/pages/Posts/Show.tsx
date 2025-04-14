@@ -2,9 +2,10 @@ import React from "react";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Head } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
-import SocialShare from "@/components/posts/SocialShare";
+import SocialShare from "@/components/Posts/SocialShare";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import * as dateFnsTz from "date-fns-tz";
 
 interface Props extends PageProps {
   post: {
@@ -56,7 +57,10 @@ const PostsShow: React.FC<Props> = ({ post }) => {
             <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
             <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
               <div>
-                Published: {format(new Date(post.created_at), 'MMMM d, yyyy')}
+                Published: {format(
+                  dateFnsTz.toZonedTime(new Date(post.created_at), 'Asia/Jakarta'),
+                  'MMMM d, yyyy HH:mm (zzz)'
+                )}
               </div>
               <SocialShare
                 url={window.location.href}

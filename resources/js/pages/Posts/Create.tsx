@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Link, useForm, Head } from "@inertiajs/react";
+import { Link, useForm, Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Editor } from '@tinymce/tinymce-react';
 import 'tinymce/tinymce';
@@ -112,7 +113,10 @@ const PostsCreate: React.FC<Props> = ({ categories, tags }) => {
     if (data.featured_image) {
       formData.append('featured_image', data.featured_image);
     }
-    post("/posts", formData as any);
+    // Use router.post for FormData, even for create
+    router.post("/posts", formData, {
+      forceFormData: true,
+    });
   };
 
   return (

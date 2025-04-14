@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Link, useForm, Head } from "@inertiajs/react";
+import Swal from "sweetalert2";
+import { Link, useForm, Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Editor } from '@tinymce/tinymce-react';
 import 'tinymce/tinymce';
@@ -40,6 +42,12 @@ interface Props extends PageProps {
     meta_description: string;
     meta_keywords: string;
     featured_image_url?: string;
+    revisions?: {
+      id: number;
+      author: string;
+      changes: Record<string, { old: string; new: string }>;
+      created_at: string;
+    }[];
   };
   categories: {
     id: number;
@@ -94,6 +102,7 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
   });
 
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>(post.featured_image_url || "");
+  const [removeFeaturedImage, setRemoveFeaturedImage] = useState(false);
 
     const handleEditorChange = (content: string) => {
     setData("content", content);
@@ -132,7 +141,13 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
     if (data.featured_image) {
       formData.append('featured_image', data.featured_image);
     }
-    put(`/posts/${post.id}`, formData as any);
+    if (removeFeaturedImage) {
+      formData.append('remove_featured_image', '1');
+    }
+    // Use router.post for FormData, even for updates, relying on _method field
+    router.post(route('posts.update', post.id), formData, {
+      forceFormData: true, // Ensure it's sent as multipart/form-data
+    });
   };
 
   return (
@@ -180,6 +195,7 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
                 <TabsList className="mb-2">
                   <TabsTrigger value="edit">Edit</TabsTrigger>
                   <TabsTrigger value="preview">Preview</TabsTrigger>
+                  <TabsTrigger value="revisions">Revisions</TabsTrigger>
                 </TabsList>
                 <TabsContent value="edit">
                   <div className="border border-gray-300 rounded-lg bg-gray-50 p-4 min-h-[300px] transition-all duration-200 ease-in-out hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500">
@@ -216,6 +232,12 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
                   <div className="border border-gray-300 rounded-lg bg-white p-6 min-h-[300px] prose max-w-none">
                     <div dangerouslySetInnerHTML={{ __html: data.content || '<p class="text-gray-400">No content yet...</p>' }} />
                   </div>
+                </TabsContent>
+                <TabsContent value="revisions">
+                  <RevisionsSection
+                    revisions={post.revisions ? post.revisions.slice(0, 5) : []}
+                    postId={post.id}
+                  />
                 </TabsContent>
               </Tabs>
               {errors.content && <div className="text-red-500 text-sm mt-1">{errors.content}</div>}
@@ -270,13 +292,15 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
             onFeaturedImageChange={(file) => {
               setData('featured_image', file);
               if (file) {
+                setRemoveFeaturedImage(false);
                 const reader = new FileReader();
                 reader.onloadend = () => {
                   setFeaturedImagePreview(reader.result as string);
                 };
                 reader.readAsDataURL(file);
               } else {
-                setFeaturedImagePreview(post.featured_image_url || "");
+                setRemoveFeaturedImage(true);
+                setFeaturedImagePreview("");
               }
             }}
             featuredImagePreview={featuredImagePreview}
@@ -306,8 +330,84 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
         </motion.div>
       </div>
       </motion.div>
+    {/* Revisions Section */}
     </AppLayout>
   );
 };
 
+{/* Revisions Section */}
+export function RevisionsSection({ revisions, postId }: { revisions?: Props["post"]["revisions"], postId?: number }) {
+  if (!revisions || revisions.length === 0) return null;
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm mt-8">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">Revision History</h2>
+        <ul className="space-y-4">
+          {revisions.map((rev: any) => (
+            <li key={rev.id} className="border-b pb-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">{rev.author}</span>
+                <span className="text-xs text-gray-500">{rev.created_at}</span>
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                {Object.keys(rev.changes).map((field) => (
+                  <div key={field}>
+                    <span className="font-bold">{field}:</span>{" "}
+                    <span className="line-through text-red-500">{rev.changes[field].old}</span>{" "}
+                    <span className="text-green-600">{rev.changes[field].new}</span>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const result = await Swal.fire({
+                      title: "Restore this revision?",
+                      text: "This will overwrite the current post content with the selected revision.",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#3085d6",
+                      cancelButtonColor: "#d33",
+                      confirmButtonText: "Yes, restore it!"
+                    });
+                    if (result.isConfirmed) {
+                      router.post(
+                        route('posts.revisions.restore', { post: postId, revision: rev.id }),
+                        {},
+                        {
+                          preserveScroll: true,
+                          onSuccess: () => {
+                            window.location.reload();
+                          }
+                        }
+                      );
+                    }
+                  }}
+                >
+                  Restore
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export default PostsEdit;
+
+// Show revision history below the edit form
+// @ts-ignore
+if (typeof window !== "undefined") {
+  // Dynamically render the revision section if present
+  const root = document.getElementById("revision-section");
+  if (root && (window as any).postRevisions) {
+    // @ts-ignore
+    import("./Edit").then(({ RevisionsSection }) => {
+      // @ts-ignore
+      ReactDOM.render(<RevisionsSection revisions={(window as any).postRevisions} />, root);
+    });
+  }
+}
