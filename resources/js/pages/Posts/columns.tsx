@@ -2,6 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, MoreHorizontal, Trash2, RotateCcw, Eye, Pencil } from "lucide-react";
 import { Link } from "@inertiajs/react";
+import Swal from "sweetalert2";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ export interface Post {
   };
   created_at: string | null;
   updated_at: string | null;
+  comments_count: number;
 }
 
 interface PostColumnsOptions {
@@ -60,16 +62,18 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
       ),
     },
     {
+      accessorKey: "author",
+      header: "Author",
+      cell: ({ row }) => <span>{row.original.author?.name}</span>,
+      enableSorting: true,
+      size: 120,
+    },
+    {
       accessorKey: "category",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: "Category",
+      cell: ({ row }) => <span>{row.original.category}</span>,
+      enableSorting: true,
+      size: 120,
     },
     {
       accessorKey: "status",
@@ -89,29 +93,29 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
       ),
     },
     {
-      accessorKey: "created_at",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Created At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+      accessorKey: "comments_count",
+      header: "Comments",
+      cell: ({ row }) => (
+        <span>{row.original.comments_count}</span>
       ),
+      enableSorting: true,
+      size: 60,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => <span>{row.original.created_at}</span>,
+      enableSorting: true,
+      size: 120,
     },
     {
       accessorKey: "updated_at",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Updated At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: "Updated At",
+      cell: ({ row }) => <span>{row.original.updated_at}</span>,
+      enableSorting: true,
+      size: 120,
     },
+
   ];
 
   if (options.showActions || options.showRestore) {
@@ -119,6 +123,109 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
       id: "actions",
       cell: ({ row }) => {
         const post = row.original;
+
+        // Handler for status change (publish, unpublish, move to trash)
+        const handleStatusChange = async (newStatus: string) => {
+          const result = await Swal.fire({
+            title: "Are you sure?",
+            text: `Do you want to change the status to ${newStatus}?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, change it!",
+            cancelButtonText: "Cancel",
+          });
+
+          if (result.isConfirmed) {
+            try {
+              const response = await fetch(`/posts/${post.id}/status`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+                },
+                body: JSON.stringify({ status: newStatus }),
+              });
+
+              if (response.ok) {
+                await Swal.fire("Success", "Post status updated!", "success");
+                window.location.reload();
+              } else {
+                await Swal.fire("Error", "Failed to update post status.", "error");
+              }
+            } catch (error) {
+              await Swal.fire("Error", "Failed to update post status.", "error");
+            }
+          }
+        };
+
+        // Handler for restore
+        const handleRestore = async () => {
+          const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to restore this post?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, restore it!",
+            cancelButtonText: "Cancel",
+          });
+
+          if (result.isConfirmed) {
+            try {
+              const response = await fetch(`/posts/${post.id}/restore`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+                },
+              });
+
+              if (response.ok) {
+                await Swal.fire("Restored!", "Post has been restored.", "success");
+                window.location.reload();
+              } else {
+                await Swal.fire("Error", "Failed to restore post.", "error");
+              }
+            } catch (error) {
+              await Swal.fire("Error", "Failed to restore post.", "error");
+            }
+          }
+        };
+
+        // Handler for permanent delete
+        const handleDelete = async () => {
+          const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "This will permanently delete the post.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, delete it!",
+            cancelButtonText: "Cancel",
+          });
+
+          if (result.isConfirmed) {
+            try {
+              const response = await fetch(`/posts/${post.id}/force-delete`, {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+                },
+              });
+
+              if (response.ok) {
+                await Swal.fire("Deleted!", "Post has been deleted.", "success");
+                window.location.reload();
+              } else {
+                await Swal.fire("Error", "Failed to delete post.", "error");
+              }
+            } catch (error) {
+              await Swal.fire("Error", "Failed to delete post.", "error");
+            }
+          }
+        };
 
         return (
           <DropdownMenu>
@@ -145,24 +252,24 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
               )}
 
               {/* Status change actions (not for trash) */}
-              {options.showActions && options.onStatusChange && (
+              {options.showActions && (
                 <>
                   {options.status === "draft" && (
                     <DropdownMenuItem
-                      onClick={() => options.onStatusChange?.(post.id, "published")}
+                      onClick={() => handleStatusChange("published")}
                     >
-                      Publish
+                      <ArrowUpDown className="mr-2 h-4 w-4" /> Publish
                     </DropdownMenuItem>
                   )}
                   {options.status === "published" && (
                     <DropdownMenuItem
-                      onClick={() => options.onStatusChange?.(post.id, "draft")}
+                      onClick={() => handleStatusChange("draft")}
                     >
-                      Unpublish
+                      <ArrowUpDown className="mr-2 h-4 w-4" /> Unpublish
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onClick={() => options.onStatusChange?.(post.id, "trash")}
+                    onClick={() => handleStatusChange("trash")}
                     className="text-red-600"
                   >
                     <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
@@ -171,16 +278,16 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
               )}
 
               {/* Restore action (only for trash) */}
-              {options.showRestore && options.onRestore && (
-                <DropdownMenuItem onClick={() => options.onRestore?.(post.id)}>
+              {options.showRestore && (
+                <DropdownMenuItem onClick={handleRestore}>
                   <RotateCcw className="mr-2 h-4 w-4" /> Restore
                 </DropdownMenuItem>
               )}
 
               {/* Delete action (only for trash) */}
-              {options.showRestore && options.onDelete && (
+              {options.showRestore && (
                 <DropdownMenuItem
-                  onClick={() => options.onDelete?.(post.id)}
+                  onClick={handleDelete}
                   className="text-red-600"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently

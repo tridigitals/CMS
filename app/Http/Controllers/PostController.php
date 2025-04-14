@@ -16,16 +16,19 @@ class PostController extends Controller
     public function index()
     {
         $publishedPosts = Post::with(['category', 'author'])
+            ->withCount('comments')
             ->published()
             ->latest()
             ->get();
 
         $draftPosts = Post::with(['category', 'author'])
+            ->withCount('comments')
             ->draft()
             ->latest()
             ->get();
 
         $trashedPosts = Post::with(['category', 'author'])
+            ->withCount('comments')
             ->trash()
             ->latest()
             ->get();
@@ -45,6 +48,7 @@ class PostController extends Controller
                         ],
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
+                        'comments_count' => $post->comments_count,
                     ];
                 }),
                 'draft' => $draftPosts->map(function ($post) {
@@ -60,6 +64,7 @@ class PostController extends Controller
                         ],
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
+                        'comments_count' => $post->comments_count,
                     ];
                 }),
                 'trash' => $trashedPosts->map(function ($post) {
@@ -75,6 +80,7 @@ class PostController extends Controller
                         ],
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
+                        'comments_count' => $post->comments_count,
                     ];
                 }),
             ],
@@ -318,6 +324,19 @@ class PostController extends Controller
     public function revisions(Post $post)
     {
         return response()->json($post->revisions->load('author'));
+    }
+    /**
+     * Permanently delete a post from storage.
+     */
+    public function forceDelete(Post $post)
+    {
+        $post->forceDelete();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Post permanently deleted']);
+        }
+
+        return redirect()->back()->with('success', 'Post permanently deleted');
     }
 
     /**

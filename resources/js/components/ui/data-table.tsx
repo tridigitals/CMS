@@ -107,7 +107,7 @@ export function DataTable<TData, TValue>({
         )}
       </div>
       <div className="rounded-xl border bg-white dark:bg-neutral-900 overflow-x-auto">
-        <Table className="min-w-full">
+        <Table className="min-w-full table-auto text-sm">
           <TableHeader>
             <TableRow>
               <TableHead className="w-8">

@@ -10,6 +10,10 @@ class Comment extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_SPAM = 'spam';
+
     protected $fillable = [
         'content',
         'user_id',
@@ -21,6 +25,16 @@ class Comment extends Model
     protected $casts = [
         'status' => 'string',
     ];
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
 
     public function user(): BelongsTo
     {

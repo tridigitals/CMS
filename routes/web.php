@@ -41,12 +41,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('posts', PostController::class);
         Route::post('/posts/{post}/status', [PostController::class, 'updateStatus'])->name('posts.status');
         Route::post('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
+        Route::delete('/posts/{post}/force-delete', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
         Route::get('/posts/{post}/revisions', [PostController::class, 'revisions'])->name('posts.revisions');
     });
 
     Route::post('/posts/{post}/revisions/{revision}/restore', [\App\Http\Controllers\PostController::class, 'restoreRevision'])
         ->middleware('can:manage posts')
         ->name('posts.revisions.restore');
+
+    // Comment routes
+    Route::prefix('comments')->name('comments.')->group(function () {
+        Route::middleware('auth')->group(function () {
+            Route::post('/posts/{post}', [\App\Http\Controllers\CommentController::class, 'store'])->name('store');
+            Route::put('/{comment}', [\App\Http\Controllers\CommentController::class, 'update'])->name('update');
+            Route::delete('/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::middleware(['auth', 'can:manage posts'])->group(function () {
+            Route::get('/', [\App\Http\Controllers\CommentController::class, 'index'])->name('index');
+            Route::get('/moderation', [\App\Http\Controllers\CommentController::class, 'moderation'])->name('moderation');
+            Route::put('/{comment}/moderate', [\App\Http\Controllers\CommentController::class, 'moderate'])->name('moderate');
+        });
+    });
 
     Route::get('/media-library', [\App\Http\Controllers\PostController::class, 'mediaLibrary'])
         ->middleware('can:manage posts')

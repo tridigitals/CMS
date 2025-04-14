@@ -32,6 +32,12 @@ export const mainNavItems: NavItem[] = [
         icon: Tag,
         permission: 'manage posts',
       },
+      {
+        title: 'Comments',
+        href: '/comments',
+        icon: LayoutGrid,
+        permission: 'manage posts',
+      }
     ],
   },
   {
