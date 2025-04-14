@@ -40,7 +40,16 @@ class CategoryController extends Controller
 
         $validated['slug'] = Str::slug($validated['name']);
 
-        Category::create($validated);
+        $category = Category::create($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'description' => $category->description,
+            ], 201);
+        }
 
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }

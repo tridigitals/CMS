@@ -71,7 +71,24 @@ export const getPostColumns = (options: PostColumnsOptions = {}): ColumnDef<Post
     {
       accessorKey: "category",
       header: "Category",
-      cell: ({ row }) => <span>{row.original.category}</span>,
+      cell: ({ row }) => {
+        // row.original.category bisa string (lama) atau array (baru)
+        let cats: string[] = [];
+        if (Array.isArray(row.original.category)) {
+          cats = row.original.category;
+        } else if (typeof row.original.category === "string") {
+          cats = row.original.category.split(",").map((c) => c.trim()).filter(Boolean);
+        }
+        const display = cats.slice(0, 3).join(", ");
+        return (
+          <span>
+            {display}
+            {cats.length > 3 && (
+              <span className="text-gray-400 ml-1">+{cats.length - 3}</span>
+            )}
+          </span>
+        );
+      },
       enableSorting: true,
       size: 120,
     },

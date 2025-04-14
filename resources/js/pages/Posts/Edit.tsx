@@ -37,7 +37,7 @@ interface Props extends PageProps {
     title: string;
     slug: string;
     content: string;
-    category_id: number;
+    category_ids: number[];
     tags: number[];
     meta_description: string;
     meta_keywords: string;
@@ -63,7 +63,7 @@ type FormDataType = {
   title: string;
   slug: string;
   content: string;
-  category_id: string;
+  category_ids: number[];
   tags: number[];
   meta_description: string;
   meta_keywords: string;
@@ -89,17 +89,22 @@ function slugify(text: string) {
     .replace(/\-\-+/g, "-");
 }
 
-const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
+const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsList }) => {
   const { data, setData, put, processing, errors } = useForm<FormData>({
     title: post.title,
     slug: post.slug,
     content: post.content,
-    category_id: String(post.category_id),
+    category_ids: post.category_ids || [],
     tags: post.tags as number[],
     meta_description: post.meta_description || "",
     meta_keywords: post.meta_keywords || "",
     featured_image: null,
   });
+
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(initialCategories);
+  const [newCategory, setNewCategory] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [addCategoryError, setAddCategoryError] = useState<string | null>(null);
 
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>(post.featured_image_url || "");
   const [removeFeaturedImage, setRemoveFeaturedImage] = useState(false);
@@ -123,8 +128,13 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
     setIsSlugEdited(true);
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setData("category_id", e.target.value);
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const id = Number(e.target.value);
+    if (e.target.checked) {
+      setData("category_ids", [...data.category_ids, id]);
+    } else {
+      setData("category_ids", data.category_ids.filter((catId) => catId !== id));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -134,7 +144,7 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
     formData.append('title', data.title);
     formData.append('slug', data.slug);
     formData.append('content', data.content);
-    formData.append('category_id', data.category_id);
+    data.category_ids.forEach(id => formData.append('category_ids[]', String(id)));
     data.tags.forEach(tag => formData.append('tags[]', String(tag)));
     formData.append('meta_description', data.meta_description);
     formData.append('meta_keywords', data.meta_keywords);
@@ -267,20 +277,69 @@ const PostsEdit: React.FC<Props> = ({ post, categories, tagsList }) => {
         >
           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">Category</h2>
-            <select
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out hover:border-indigo-300 bg-white"
-              value={data.category_id}
-              onChange={handleCategoryChange}
-              required
-            >
-              <option value="">Select Category</option>
+            <div className="flex flex-col gap-2">
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
+                <label key={category.id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    value={category.id}
+                    checked={data.category_ids.includes(category.id)}
+                    onChange={handleCategoryChange}
+                    className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+                  />
+                  <span>{category.name}</span>
+                </label>
               ))}
-            </select>
-            {errors.category_id && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_id}</div>}
+              {errors.category_ids && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_ids}</div>}
+            </div>
+            <div className="mt-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!newCategory.trim()) return;
+                  setAddingCategory(true);
+                  setAddCategoryError(null);
+                  try {
+                    const res = await fetch("/categories", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+                      },
+                      body: JSON.stringify({ name: newCategory }),
+                    });
+                    if (!res.ok) {
+                      const err = await res.json();
+                      setAddCategoryError(err?.errors?.name?.[0] || "Gagal menambah kategori");
+                    } else {
+                      const cat = await res.json();
+                      setCategories((prev) => [...prev, cat]);
+                      setData("category_ids", [...data.category_ids, cat.id]);
+                      setNewCategory("");
+                    }
+                  } catch (err) {
+                    setAddCategoryError("Gagal menambah kategori");
+                  }
+                  setAddingCategory(false);
+                }}
+                className="flex flex-col gap-2 mt-2"
+              >
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Tambah kategori baru"
+                  className="border border-gray-300 rounded-lg px-3 py-1 w-full"
+                  disabled={addingCategory}
+                />
+                <Button type="submit" disabled={addingCategory || !newCategory.trim()} className="w-full">
+                  {addingCategory ? "Menambah..." : "Tambah"}
+                </Button>
+              </form>
+              {addCategoryError && <div className="text-red-500 text-sm mt-1">{addCategoryError}</div>}
+            </div>
           </div>
           <MetaFields
             title={data.title}

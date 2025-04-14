@@ -15,19 +15,19 @@ class PostController extends Controller
      */
     public function index()
     {
-        $publishedPosts = Post::with(['category', 'author'])
+        $publishedPosts = Post::with(['categories', 'author'])
             ->withCount('comments')
             ->published()
             ->latest()
             ->get();
 
-        $draftPosts = Post::with(['category', 'author'])
+        $draftPosts = Post::with(['categories', 'author'])
             ->withCount('comments')
             ->draft()
             ->latest()
             ->get();
 
-        $trashedPosts = Post::with(['category', 'author'])
+        $trashedPosts = Post::with(['categories', 'author'])
             ->withCount('comments')
             ->trash()
             ->latest()
@@ -41,7 +41,7 @@ class PostController extends Controller
                         'title' => $post->title,
                         'slug' => $post->slug,
                         'content' => Str::limit($post->content, 100),
-                        'category' => $post->category->name,
+                        'category' => $post->categories->pluck('name')->join(', '),
                         'status' => $post->status,
                         'author' => [
                             'name' => $post->author->name,
@@ -57,7 +57,7 @@ class PostController extends Controller
                         'title' => $post->title,
                         'slug' => $post->slug,
                         'content' => Str::limit($post->content, 100),
-                        'category' => $post->category->name,
+                        'category' => $post->categories->pluck('name')->join(', '),
                         'status' => $post->status,
                         'author' => [
                             'name' => $post->author->name,
@@ -73,7 +73,7 @@ class PostController extends Controller
                         'title' => $post->title,
                         'slug' => $post->slug,
                         'content' => Str::limit($post->content, 100),
-                        'category' => $post->category->name,
+                        'category' => $post->categories->pluck('name')->join(', '),
                         'status' => $post->status,
                         'author' => [
                             'name' => $post->author->name,
@@ -123,7 +123,8 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'integer|exists:categories,id',
             'meta_description' => 'nullable|string|max:160',
             'meta_keywords' => 'nullable|string',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Add image validation
@@ -135,13 +136,15 @@ class PostController extends Controller
             'title' => $request->title,
             'slug' => Str::slug($request->title),
             'content' => $request->content,
-            'category_id' => $request->category_id,
             'meta_description' => $request->meta_description,
             'meta_keywords' => $request->meta_keywords,
             'status' => Post::STATUS_DRAFT,
             'author_id' => auth()->id(),
             'updated_at' => now(),
         ]);
+
+        // Sync categories
+        $post->categories()->sync($request->category_ids);
 
         // Handle featured image upload
         if ($request->hasFile('featured_image')) {
@@ -161,7 +164,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        $post->load(['category', 'author', 'revisions.author']);
+        $post->load(['categories', 'author', 'revisions.author']);
 
         return Inertia::render('Posts/Show', [
             'post' => [
@@ -169,7 +172,7 @@ class PostController extends Controller
                 'title' => $post->title,
                 'slug' => $post->slug,
                 'content' => $post->content,
-                'category' => $post->category->name,
+                'categories' => $post->categories->pluck('name'),
                 'status' => $post->status,
                 'meta_description' => $post->meta_description,
                 'meta_keywords' => $post->meta_keywords,
@@ -208,7 +211,7 @@ class PostController extends Controller
                 'title' => $post->title,
                 'slug' => $post->slug,
                 'content' => $post->content,
-                'category_id' => $post->category_id,
+                'category_ids' => $post->categories->pluck('id')->toArray(),
                 'status' => $post->status,
                 'meta_description' => $post->meta_description,
                 'meta_keywords' => $post->meta_keywords,
@@ -248,7 +251,8 @@ class PostController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'integer|exists:categories,id',
             'meta_description' => 'nullable|string|max:160',
             'meta_keywords' => 'nullable|string',
             'tags' => 'nullable|array',
@@ -263,9 +267,19 @@ class PostController extends Controller
         }
 
         // Update post with validated data (excluding the file for now)
-        $post->update($validatedData);
-        $post->updated_at = now();
-        $post->save();
+        $post->update([
+            'title' => $request->title,
+            'slug' => Str::slug($request->title),
+            'content' => $request->content,
+            'meta_description' => $request->meta_description,
+            'meta_keywords' => $request->meta_keywords,
+            'status' => $post->status, // keep current status
+            'author_id' => $post->author_id, // keep current author
+            'updated_at' => now(),
+        ]);
+
+        // Sync categories
+        $post->categories()->sync($request->category_ids);
 
         // Handle featured image upload if present
         if ($request->hasFile('featured_image')) {
@@ -394,7 +408,6 @@ class PostController extends Controller
             'slug' => 'media-library-' . now()->timestamp,
             'content' => 'Temporary post for media library',
             'author_id' => auth()->id(),
-            'category_id' => 1, // Default category
             'status' => 'draft'
         ]);
         $tempPost->save();

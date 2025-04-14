@@ -26,7 +26,6 @@ class Post extends Model implements HasMedia
         'meta_description',
         'meta_keywords',
         'featured_image',
-        'category_id',
         'author_id',
         'status'
     ];
@@ -136,9 +135,9 @@ class Post extends Model implements HasMedia
         ]);
     }
 
-    public function category(): BelongsTo
+    public function categories()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class, 'category_post');
     }
 
     public function author(): BelongsTo
