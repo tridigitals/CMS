@@ -1,17 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Link, useForm, Head } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { Editor } from '@tinymce/tinymce-react';
+import 'tinymce/tinymce';
+import 'tinymce/models/dom';
+import 'tinymce/themes/silver';
+import 'tinymce/icons/default';
+import 'tinymce/plugins/advlist';
+import 'tinymce/plugins/autolink';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/link';
+import 'tinymce/plugins/image';
+import 'tinymce/plugins/charmap';
+import 'tinymce/plugins/preview';
+import 'tinymce/plugins/anchor';
+import 'tinymce/plugins/searchreplace';
+import 'tinymce/plugins/visualblocks';
+import 'tinymce/plugins/code';
+import 'tinymce/plugins/fullscreen';
+import 'tinymce/plugins/insertdatetime';
+import 'tinymce/plugins/media';
+import 'tinymce/plugins/table';
+import 'tinymce/plugins/help';
+import 'tinymce/plugins/wordcount';
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MetaFields from "@/components/Posts/MetaFields";
 
 interface Props extends PageProps {
   categories: { id: number; name: string }[];
   tags: { id: number; name: string }[];
 }
+
+type FormDataType = {
+  title: string;
+  slug: string;
+  content: string;
+  category_id: string;
+  tags: number[];
+  meta_description: string;
+  meta_keywords: string;
+  featured_image: File | null;
+  [key: string]: any;  // Index signature for string keys
+}
+
+interface FormData extends FormDataType {}
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Dashboard", href: "/dashboard" },
@@ -30,25 +65,22 @@ function slugify(text: string) {
 }
 
 const PostsCreate: React.FC<Props> = ({ categories, tags }) => {
-  const { data, setData, post, processing, errors } = useForm<{
-    title: string;
-    slug: string;
-    content: string;
-    category_id: string;
-    tags: number[];
-  }>({
+  const { data, setData, post, processing, errors } = useForm<FormData>({
     title: "",
     slug: "",
     content: "",
     category_id: "",
     tags: [],
+    meta_description: "",
+    meta_keywords: "",
+    featured_image: null,
   });
 
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: data.content,
-    onUpdate: ({ editor }) => setData("content", editor.getHTML()),
-  });
+  const [featuredImagePreview, setFeaturedImagePreview] = useState<string>("");
+
+  const handleEditorChange = (content: string) => {
+    setData("content", content);
+  };
 
   const [isSlugEdited, setIsSlugEdited] = useState(false);
 
@@ -69,7 +101,18 @@ const PostsCreate: React.FC<Props> = ({ categories, tags }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post("/posts");
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('slug', data.slug);
+    formData.append('content', data.content);
+    formData.append('category_id', data.category_id);
+    data.tags.forEach(tag => formData.append('tags[]', String(tag)));
+    formData.append('meta_description', data.meta_description);
+    formData.append('meta_keywords', data.meta_keywords);
+    if (data.featured_image) {
+      formData.append('featured_image', data.featured_image);
+    }
+    post("/posts", formData as any);
   };
 
   return (
@@ -121,8 +164,34 @@ const PostsCreate: React.FC<Props> = ({ categories, tags }) => {
                   <TabsTrigger value="preview">Preview</TabsTrigger>
                 </TabsList>
                 <TabsContent value="edit">
-                  <div className="border border-gray-300 rounded-lg bg-gray-50 p-4 min-h-[300px] transition-all duration-200 ease-in-out hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500">
-                    <EditorContent editor={editor} className="prose max-w-none" />
+                  <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <Editor
+                      value={data.content}
+                      licenseKey="gpl"
+                      onEditorChange={handleEditorChange}
+                      init={{
+                        height: 400,
+                        menubar: true,
+                        plugins: [
+                          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                          'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                        ],
+                        toolbar: 'undo redo | blocks | ' +
+                          'bold italic forecolor | alignleft aligncenter ' +
+                          'alignright alignjustify | bullist numlist outdent indent | ' +
+                          'removeformat | help',
+                        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                        branding: false,
+                        promotion: false,
+                        skin: "oxide",
+                        skin_url: "/tinymce/skins/ui/oxide",
+                        content_css: "/tinymce/skins/content/default/content.min.css",
+                        icons: "default",
+                        icons_url: "/tinymce/icons/default/icons.min.js",
+                        base_url: '/tinymce'
+                      }}
+                    />
                   </div>
                 </TabsContent>
                 <TabsContent value="preview">
@@ -173,6 +242,28 @@ const PostsCreate: React.FC<Props> = ({ categories, tags }) => {
             </select>
             {errors.category_id && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_id}</div>}
           </div>
+          <MetaFields
+            title={data.title}
+            metaDescription={data.meta_description}
+            metaKeywords={data.meta_keywords}
+            featuredImage={data.featured_image}
+            onMetaDescriptionChange={(value) => setData('meta_description', value)}
+            onMetaKeywordsChange={(value) => setData('meta_keywords', value)}
+            onFeaturedImageChange={(file) => {
+              setData('featured_image', file);
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setFeaturedImagePreview(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              } else {
+                setFeaturedImagePreview("");
+              }
+            }}
+            featuredImagePreview={featuredImagePreview}
+            errors={errors}
+          />
           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">Tags</h2>
             <select

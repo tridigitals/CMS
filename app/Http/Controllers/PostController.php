@@ -25,6 +25,9 @@ class PostController extends Controller
                     'slug' => $post->slug,
                     'content' => $post->content,
                     'category' => $post->category->name,
+                    'meta_description' => $post->meta_description,
+                    'meta_keywords' => $post->meta_keywords,
+                    'featured_image_url' => $post->featured_image_url,
                     'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                     'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
                 ];
@@ -64,6 +67,8 @@ class PostController extends Controller
             'title' => 'required',
             'content' => 'required',
             'category_id' => 'required|exists:categories,id',
+            'meta_description' => 'nullable|max:160',
+            'meta_keywords' => 'nullable',
         ]);
 
         $post = Post::create([
@@ -71,6 +76,8 @@ class PostController extends Controller
             'slug' => Str::slug($request->title),
             'content' => $request->content,
             'category_id' => $request->category_id,
+            'meta_description' => $request->meta_description,
+            'meta_keywords' => $request->meta_keywords,
         ]);
 
         // Convert tag IDs to tag names before syncing
@@ -92,6 +99,9 @@ class PostController extends Controller
                 'slug' => $post->slug,
                 'content' => $post->content,
                 'category' => $post->category->name,
+                'meta_description' => $post->meta_description,
+                'meta_keywords' => $post->meta_keywords,
+                'featured_image_url' => $post->featured_image_url,
                 'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                 'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
             ],
@@ -113,6 +123,9 @@ class PostController extends Controller
                 'content' => $post->content,
                 'category_id' => $post->category_id,
                 'tags' => $post->tags->pluck('id')->toArray(),
+                'meta_description' => $post->meta_description,
+                'meta_keywords' => $post->meta_keywords,
+                'featured_image_url' => $post->featured_image_url,
             ],
             'categories' => $categories->map(function ($category) {
                 return [
@@ -138,6 +151,8 @@ class PostController extends Controller
             'title' => 'required',
             'content' => 'required',
             'category_id' => 'required|exists:categories,id',
+            'meta_description' => 'nullable|max:160',
+            'meta_keywords' => 'nullable',
         ]);
 
         $post->update([
@@ -145,6 +160,8 @@ class PostController extends Controller
             'slug' => Str::slug($request->title),
             'content' => $request->content,
             'category_id' => $request->category_id,
+            'meta_description' => $request->meta_description,
+            'meta_keywords' => $request->meta_keywords,
         ]);
 
         // Convert tag IDs to tag names before syncing

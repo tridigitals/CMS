@@ -15,6 +15,12 @@ export const mainNavItems: NavItem[] = [
     icon: LayoutGrid,
     children: [
       {
+        title: 'Posts',
+        href: '/posts',
+        icon: LayoutGrid,
+        permission: 'manage posts',
+      },
+      {
         title: 'Categories',
         href: '/categories',
         icon: LayoutGrid,
