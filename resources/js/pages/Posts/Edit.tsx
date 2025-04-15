@@ -30,6 +30,42 @@ import 'tinymce/plugins/wordcount';
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MetaFields from "@/components/Posts/MetaFields";
+import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
+
+const customStyles = {
+  control: (base: any, state: any) => ({
+    ...base,
+    borderColor: state.isFocused ? '#6366f1' : '#e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(99, 102, 241, 0.2)' : 'none',
+    '&:hover': {
+      borderColor: '#6366f1',
+    },
+  }),
+  option: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#6366f1' : state.isFocused ? '#f3f4f6' : 'transparent',
+    color: state.isSelected ? 'white' : '#374151',
+    '&:active': {
+      backgroundColor: '#6366f1',
+    },
+  }),
+  multiValue: (base: any) => ({
+    ...base,
+    backgroundColor: '#f3f4f6',
+  }),
+  multiValueLabel: (base: any) => ({
+    ...base,
+    color: '#374151',
+  }),
+  multiValueRemove: (base: any) => ({
+    ...base,
+    '&:hover': {
+      backgroundColor: '#ef4444',
+      color: 'white',
+    },
+  }),
+};
 
 interface Props extends PageProps {
   post: {
@@ -89,7 +125,7 @@ function slugify(text: string) {
     .replace(/\-\-+/g, "-");
 }
 
-const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsList }) => {
+const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsList: initialTagsList }) => {
   const { data, setData, put, processing, errors } = useForm<FormData>({
     title: post.title,
     slug: post.slug,
@@ -102,6 +138,7 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
   });
 
   const [categories, setCategories] = useState<{ id: number; name: string }[]>(initialCategories);
+  const [tagsList, setTagsList] = useState<{ id: number; name: string }[]>(initialTagsList);
   const [newCategory, setNewCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
   const [addCategoryError, setAddCategoryError] = useState<string | null>(null);
@@ -158,6 +195,38 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
     router.post(route('posts.update', post.id), formData, {
       forceFormData: true, // Ensure it's sent as multipart/form-data
     });
+  };
+
+  const categoryOptions = categories.map(category => ({ value: category.id, label: category.name }));
+  const tagOptions = tagsList.map(tag => ({ value: tag.id, label: tag.name }));
+
+  const handleCreateTag = async (inputValue: string) => {
+    try {
+      const response = await fetch('/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+        body: JSON.stringify({ name: inputValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create tag');
+      }
+
+      const newTag = await response.json();
+      setData('tags', [...data.tags, newTag.id]);
+      const newTagOption = { id: newTag.id, name: newTag.name };
+      setTagsList((prev: { id: number; name: string }[]) => [...prev, newTagOption]);
+      
+      return newTagOption;
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      return null;
+    }
   };
 
   return (
@@ -277,69 +346,16 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
         >
           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">Category</h2>
-            <div className="flex flex-col gap-2">
-              {categories.map((category) => (
-                <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    value={category.id}
-                    checked={data.category_ids.includes(category.id)}
-                    onChange={handleCategoryChange}
-                    className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
-                  />
-                  <span>{category.name}</span>
-                </label>
-              ))}
-              {errors.category_ids && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_ids}</div>}
-            </div>
-            <div className="mt-4">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!newCategory.trim()) return;
-                  setAddingCategory(true);
-                  setAddCategoryError(null);
-                  try {
-                    const res = await fetch("/categories", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
-                        "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
-                      },
-                      body: JSON.stringify({ name: newCategory }),
-                    });
-                    if (!res.ok) {
-                      const err = await res.json();
-                      setAddCategoryError(err?.errors?.name?.[0] || "Gagal menambah kategori");
-                    } else {
-                      const cat = await res.json();
-                      setCategories((prev) => [...prev, cat]);
-                      setData("category_ids", [...data.category_ids, cat.id]);
-                      setNewCategory("");
-                    }
-                  } catch (err) {
-                    setAddCategoryError("Gagal menambah kategori");
-                  }
-                  setAddingCategory(false);
-                }}
-                className="flex flex-col gap-2 mt-2"
-              >
-                <input
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Tambah kategori baru"
-                  className="border border-gray-300 rounded-lg px-3 py-1 w-full"
-                  disabled={addingCategory}
-                />
-                <Button type="submit" disabled={addingCategory || !newCategory.trim()} className="w-full">
-                  {addingCategory ? "Menambah..." : "Tambah"}
-                </Button>
-              </form>
-              {addCategoryError && <div className="text-red-500 text-sm mt-1">{addCategoryError}</div>}
-            </div>
+            <Select
+              isMulti
+              options={categoryOptions}
+              value={categoryOptions.filter(option => data.category_ids.includes(option.value))}
+              onChange={(selected) => setData('category_ids', selected.map(option => option.value))}
+              placeholder="Select categories..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+            />
+            {errors.category_ids && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_ids}</div>}
           </div>
           <MetaFields
             title={data.title}
@@ -367,23 +383,19 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
           />
           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">Tags</h2>
-            <select
-              multiple
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out hover:border-indigo-300 bg-white min-h-[120px]"
-              value={data.tags.map(String)}
-              onChange={(e) =>
-                setData(
-                  "tags",
-                  Array.from(e.target.selectedOptions, (option) => Number(option.value)) as number[]
-                )
-              }
-            >
-              {tagsList.map((tag) => (
-                <option key={tag.id} value={tag.id} className="p-1 hover:bg-indigo-50">
-                  {tag.name}
-                </option>
-              ))}
-            </select>
+            <CreatableSelect
+              isMulti
+              options={tagOptions}
+              value={tagOptions.filter(option => data.tags.includes(option.value))}
+              onChange={(selected) => setData('tags', selected.map(option => option.value))}
+              onCreateOption={handleCreateTag}
+              placeholder="Select or create tags..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+              styles={customStyles}
+              formatCreateLabel={(inputValue: string) => `Create tag "${inputValue}"`}
+              noOptionsMessage={() => "Type to create a new tag..."}
+            />
             {errors.tags && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.tags}</div>}
           </div>
         </motion.div>

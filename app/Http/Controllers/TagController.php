@@ -33,17 +33,20 @@ class TagController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|unique:tags,name',
-            'slug' => 'required|string|unique:tags,slug',
-            'type' => 'nullable|string',
+        $request->validate([
+            'name' => 'required|string',
         ]);
 
-        $tag = Tag::create([
-            'name' => $validated['name'],
-            'slug' => $validated['slug'],
-            'type' => $validated['type'] ?? null,
-        ]);
+        // Gunakan findOrCreateFromString dari Spatie Tags
+        $tag = Tag::findOrCreateFromString($request->name);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $tag->id,
+                'name' => $tag->name instanceof \Spatie\Tags\HasTranslations ? $tag->name['en'] : $tag->name,
+                'slug' => $tag->slug instanceof \Spatie\Tags\HasTranslations ? $tag->slug['en'] : $tag->slug,
+            ]);
+        }
 
         return redirect()->route('tags.index')->with('success', 'Tag created successfully.');
     }
