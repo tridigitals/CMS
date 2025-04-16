@@ -196,6 +196,35 @@ const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: ini
     }
   };
 
+  const handleCreateCategory = async (inputValue: string) => {
+    try {
+      const response = await fetch('/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+        body: JSON.stringify({ name: inputValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
+
+      const newCategory = await response.json();
+      setData('category_ids', [...data.category_ids, newCategory.id]);
+      const newCategoryOption = { id: newCategory.id, name: newCategory.name };
+      setCategories(prev => [...prev, newCategoryOption]);
+      
+      return newCategoryOption;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      return null;
+    }
+  };
+
   const categoryOptions = categories.map(category => ({ value: category.id, label: category.name }));
   const tagOptions = tags.map(tag => ({ value: tag.id, label: tag.name }));
 
@@ -311,14 +340,18 @@ const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: ini
         >
           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">Category</h2>
-            <Select
+            <CreatableSelect
               isMulti
               options={categoryOptions}
               value={categoryOptions.filter(option => data.category_ids.includes(option.value))}
-              onChange={(selected) => setData('category_ids', selected.map(option => option.value))}
-              placeholder="Select categories..."
+              onChange={(selected) => setData('category_ids', selected ? selected.map(option => option.value) : [])}
+              onCreateOption={handleCreateCategory}
+              placeholder="Select or create categories..."
               className="basic-multi-select"
               classNamePrefix="select"
+              styles={customStyles}
+              formatCreateLabel={(inputValue: string) => `Create category "${inputValue}"`}
+              noOptionsMessage={() => "Type to create a new category..."}
             />
             {errors.category_ids && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.category_ids}</div>}
           </div>
