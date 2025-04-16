@@ -53,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('comments')->name('comments.')->group(function () {
         Route::middleware('auth')->group(function () {
             Route::post('/posts/{post}', [\App\Http\Controllers\CommentController::class, 'store'])->name('store');
+            Route::get('/{comment}', [\App\Http\Controllers\CommentController::class, 'show'])->name('show');
             Route::put('/{comment}', [\App\Http\Controllers\CommentController::class, 'update'])->name('update');
             Route::delete('/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('destroy');
         });
@@ -60,7 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware(['auth', 'can:manage posts'])->group(function () {
             Route::get('/', [\App\Http\Controllers\CommentController::class, 'index'])->name('index');
             Route::get('/moderation', [\App\Http\Controllers\CommentController::class, 'moderation'])->name('moderation');
-            Route::put('/{comment}/moderate', [\App\Http\Controllers\CommentController::class, 'moderate'])->name('moderate');
+            Route::match(['put', 'patch'], '/{comment}/moderate', [\App\Http\Controllers\CommentController::class, 'moderate'])->name('moderate');
         });
     });
 

@@ -161,7 +161,7 @@ const CommentsIndex: React.FC<Props> = ({
               </div>
             ) : (
               <div className="text-center py-10 text-gray-500">
-                Belum ada komentar yang disetujui
+                No approved comments yet
               </div>
             )}
           </TabsContent>
@@ -183,7 +183,7 @@ const CommentsIndex: React.FC<Props> = ({
               </div>
             ) : (
               <div className="text-center py-10 text-gray-500">
-                Belum ada komentar yang menunggu persetujuan
+                No pending comments yet
               </div>
             )}
           </TabsContent>

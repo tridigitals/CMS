@@ -1,4 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
+import { Link } from "@inertiajs/react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
@@ -44,15 +45,15 @@ export const getCommentColumns = ({
         ? comment.content.slice(0, maxLength) + "..."
         : comment.content;
       return (
-        <div className="max-w-xl">
-          <div className="font-medium">
+        <Link href={`/comments/${comment.id}`} className="max-w-xl">
+          <div className="font-medium hover:text-blue-600 hover:underline">
             {content}
           </div>
           <div className="text-sm text-muted-foreground">
             {comment.parent_id && "↳ "}
             On post: {comment.post.title}
           </div>
-        </div>
+        </Link>
       );
     },
   },

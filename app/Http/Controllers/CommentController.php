@@ -106,6 +106,15 @@ class CommentController extends Controller
         return back()->with('success', 'Status komentar berhasil diperbarui');
     }
 
+    public function show(Comment $comment)
+    {
+        $comment->load(['user', 'post', 'children.user']);
+        
+        return Inertia::render('Comments/Show', [
+            'comment' => $comment
+        ]);
+    }
+
     public function moderationQueue()
     {
 
