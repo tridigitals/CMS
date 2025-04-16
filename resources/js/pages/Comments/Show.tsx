@@ -1,11 +1,11 @@
 import { Head } from '@inertiajs/react';
 import { PageProps, BreadcrumbItem } from '@/types';
 import AppLayout from "@/layouts/app-layout";
-import { Comment } from '@/types/models';
-import { Button } from '@/Components/ui/button';
-import { Badge } from '@/Components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
+import { Comment, User } from '@/types/models';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarIcon, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -13,6 +13,9 @@ import Swal from 'sweetalert2';
 
 interface Props extends PageProps {
     comment: Comment;
+    auth: {
+        user: User;
+    };
 }
 
 const breadcrumbs = (commentId: number): BreadcrumbItem[] => [
@@ -83,8 +86,6 @@ export default function Show({ auth, comment }: Props) {
 
     return (
         <AppLayout
-            user={auth.user}
-            title="Comment Details"
             breadcrumbs={breadcrumbs(comment.id)}
         >
             <Head title="Comment Details" />
@@ -107,7 +108,7 @@ export default function Show({ auth, comment }: Props) {
                                         </div>
                                     </div>
                                 </div>
-                                <Badge variant={getStatusBadgeVariant(comment.status)} className="text-sm">
+                                <Badge variant={getStatusBadgeVariant(comment.status) as "destructive" | "secondary" | "default" | "outline"} className="text-sm">
                                     {getStatusLabel(comment.status)}
                                 </Badge>
                             </div>
@@ -121,7 +122,7 @@ export default function Show({ auth, comment }: Props) {
                                 {comment.status !== 'approved' && (
                                     <Button
                                         onClick={() => moderateComment('approved')}
-                                        variant="success"
+                                        variant="default"
                                         size="sm"
                                         className="transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                                     >
@@ -134,7 +135,7 @@ export default function Show({ auth, comment }: Props) {
                                 {comment.status !== 'pending' && (
                                     <Button
                                         onClick={() => moderateComment('pending')}
-                                        variant="warning"
+                                        variant="outline"
                                         size="sm"
                                         className="transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                                     >
@@ -148,7 +149,7 @@ export default function Show({ auth, comment }: Props) {
                                 {comment.status !== 'spam' && (
                                     <Button
                                         onClick={() => moderateComment('spam')}
-                                        variant="danger"
+                                        variant="destructive"
                                         size="sm"
                                         className="transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2"
                                     >
@@ -168,7 +169,7 @@ export default function Show({ auth, comment }: Props) {
                                         <h3 className="text-lg font-semibold">Replies ({comment.replies.length})</h3>
                                     </div>
                                     <div className="space-y-4">
-                                        {comment.replies.map(reply => (
+                                        {comment.replies.map((reply: Comment) => (
                                             <Card key={reply.id} className="bg-muted/10">
                                                 <CardContent className="p-4">
                                                     <div className="flex items-center space-x-3 mb-2">
