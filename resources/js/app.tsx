@@ -1,7 +1,7 @@
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/react';
-import { Inertia } from '@inertiajs/inertia';
+import { createInertiaApp, router } from '@inertiajs/react';
+import { type ErrorBag, type Errors, type GlobalEvent } from '@inertiajs/core';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
@@ -9,8 +9,19 @@ import Swal from 'sweetalert2';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-Inertia.on('success', (event: any) => {
-    const flash = event.detail?.page?.props?.flash;
+interface FlashMessages {
+    success?: string;
+    error?: string;
+}
+
+interface InertiaProps extends Record<string, unknown> {
+    flash?: FlashMessages;
+    errors: Errors & ErrorBag;
+    deferred?: Record<string, string[] | undefined>;
+}
+
+router.on('success', (event: GlobalEvent<'success'>) => {
+    const flash = event.detail.page.props.flash as FlashMessages | undefined;
     if (flash?.success) {
         Swal.fire({
             icon: 'success',

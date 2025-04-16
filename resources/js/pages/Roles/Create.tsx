@@ -1,5 +1,4 @@
 import React from "react";
-import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

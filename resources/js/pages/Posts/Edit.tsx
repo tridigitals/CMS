@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
@@ -95,7 +94,7 @@ interface Props extends PageProps {
   }[];
 }
 
-type FormDataType = {
+type InertiaFormData = {
   title: string;
   slug: string;
   content: string;
@@ -104,10 +103,9 @@ type FormDataType = {
   meta_description: string;
   meta_keywords: string;
   featured_image: File | null;
-  [key: string]: any;  // Index signature for string keys
 }
 
-interface FormData extends FormDataType {}
+type InertiaFormKey = keyof InertiaFormData;
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Dashboard", href: "/dashboard" },
@@ -126,7 +124,7 @@ function slugify(text: string) {
 }
 
 const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsList: initialTagsList }) => {
-  const { data, setData, put, processing, errors } = useForm<FormData>({
+  const { data, setData, put, processing, errors } = useForm<InertiaFormData>({
     title: post.title,
     slug: post.slug,
     content: post.content,

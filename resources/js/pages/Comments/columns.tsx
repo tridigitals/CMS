@@ -39,9 +39,15 @@ export const getCommentColumns = ({
     header: "Content",
     cell: ({ row }) => {
       const comment = row.original;
+      const maxLength = 100;
+      const content = comment.content.length > maxLength
+        ? comment.content.slice(0, maxLength) + "..."
+        : comment.content;
       return (
         <div className="max-w-xl">
-          <div className="font-medium">{comment.content}</div>
+          <div className="font-medium">
+            {content}
+          </div>
           <div className="text-sm text-muted-foreground">
             {comment.parent_id && "↳ "}
             On post: {comment.post.title}
@@ -82,10 +88,12 @@ export const getCommentColumns = ({
         <Badge
           variant={
             status === "approved"
-              ? "success"
+              ? "default"
               : status === "pending"
-              ? "warning"
-              : "destructive"
+              ? "secondary"
+              : status === "spam"
+              ? "destructive"
+              : "outline"
           }
         >
           {status}

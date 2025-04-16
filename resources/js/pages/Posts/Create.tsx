@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Link, useForm, Head, router } from "@inertiajs/react";
@@ -71,7 +70,7 @@ interface Props extends PageProps {
   tags: { id: number; name: string }[];
 }
 
-type FormDataType = {
+type PostForm = {
   title: string;
   slug: string;
   content: string;
@@ -80,10 +79,7 @@ type FormDataType = {
   meta_description: string;
   meta_keywords: string;
   featured_image: File | null;
-  [key: string]: any;  // Index signature for string keys
 }
-
-interface FormData extends FormDataType {}
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: "Dashboard", href: "/dashboard" },
@@ -102,7 +98,7 @@ function slugify(text: string) {
 }
 
 const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: initialTags }) => {
-  const { data, setData, post, processing, errors } = useForm<FormData>({
+  const { data, setData, post, processing, errors } = useForm<PostForm>({
     title: "",
     slug: "",
     content: "",

@@ -1,9 +1,9 @@
-import { Inertia } from "@inertiajs/inertia";
+import { router } from "@inertiajs/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Eye, Edit, Trash2 } from "lucide-react";
-import { Link, router } from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import Swal, { SweetAlertResult } from 'sweetalert2';
 
 export type Tag = {

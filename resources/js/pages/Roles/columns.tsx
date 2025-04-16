@@ -1,4 +1,4 @@
-import { Inertia } from "@inertiajs/inertia";
+import { router } from "@inertiajs/react";
 import Swal from "sweetalert2";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Link } from "@inertiajs/react";
-import { router } from "@inertiajs/react";
 
 export type Permission = {
   id: number;

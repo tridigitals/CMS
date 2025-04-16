@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { Link, Head } from "@inertiajs/react";
-import { Inertia } from "@inertiajs/inertia";
+import { Link, Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { type BreadcrumbItem, PageProps as BasePageProps } from "@/types";
 import Swal from "sweetalert2";

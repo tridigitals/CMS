@@ -1,6 +1,9 @@
+import { router } from "@inertiajs/react";
 import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, MoreHorizontal, Trash2, RotateCcw, Eye, Pencil } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
+import { ArrowUpDown, Edit, Eye, Trash2, RotateCcw, MoreHorizontal, Pencil } from "lucide-react";
 import { Link } from "@inertiajs/react";
 import Swal from "sweetalert2";
 import {

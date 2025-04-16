@@ -1,7 +1,5 @@
 import React from "react";
-import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Link, Head } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { DataTable } from "@/components/ui/data-table";

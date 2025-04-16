@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { Inertia } from "@inertiajs/inertia";
 import { PageProps, BreadcrumbItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Link, Head } from "@inertiajs/react";
+import { Link, Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { DataTable } from "@/components/ui/data-table";
 import { getPostColumns, Post } from "./columns";
@@ -32,7 +31,7 @@ const PostsIndex: React.FC<Props> = ({ posts, counts }) => {
 
   const handleStatusChange = (postId: number, newStatus: string) => {
     if (confirm("Are you sure you want to change this post's status?")) {
-      Inertia.post(`/posts/${postId}/status`, {
+      router.post(`/posts/${postId}/status`, {
         status: newStatus,
       });
     }
@@ -40,13 +39,13 @@ const PostsIndex: React.FC<Props> = ({ posts, counts }) => {
 
   const handleDelete = (postId: number) => {
     if (confirm("Are you sure you want to delete this post?")) {
-      Inertia.delete(`/posts/${postId}`);
+      router.delete(`/posts/${postId}`);
     }
   };
 
   const handleRestore = (postId: number) => {
     if (confirm("Are you sure you want to restore this post?")) {
-      Inertia.post(`/posts/${postId}/restore`);
+      router.post(`/posts/${postId}/restore`);
     }
   };
 

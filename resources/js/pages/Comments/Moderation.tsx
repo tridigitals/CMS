@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { Pagination } from "@/components/ui/pagination";
+import { route } from "ziggy-js";
 
 interface User {
   id: number;
@@ -34,12 +35,13 @@ interface Props {
 }
 
 export default function Moderation({ comments }: Props) {
-  const { post: submitModeration, processing } = useForm();
+  const { data, setData, post: submitModeration, processing } = useForm({ status: "" });
 
   const handleModeration = (commentId: number, status: string) => {
+    setData("status", status);
     submitModeration(route("comments.moderate", commentId), {
-      data: { status },
       method: "patch",
+      preserveScroll: true,
     });
   };
 
@@ -107,6 +109,9 @@ export default function Moderation({ comments }: Props) {
               <Pagination
                 currentPage={comments.current_page}
                 lastPage={comments.last_page}
+                onPageChange={(page) => {
+                  window.location.href = route('comments.moderation', { page });
+                }}
               />
             </div>
           )}
