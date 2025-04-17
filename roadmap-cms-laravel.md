@@ -105,7 +105,7 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 - [x] Hari 3: CRUD Permission
 - [x] Hari 4: CRUD Category (model, migration, controller, React form)
 - [x] Hari 4: CRUD Tag (model, migration, controller, React form)
-- Hari 4: CRUD Post (model, migration, controller, React form) dengan fitur :
+- [x] Hari 4: CRUD Post (model, migration, controller, React form) dengan fitur :
     Use Spatie's Media Library for managing media associated with posts.
     Implement slugs for SEO-friendly URLs.
     Add meta descriptions and keywords for SEO.
@@ -119,7 +119,13 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     Implement structured data markup (Schema.org) for better search engine understanding.
     Implement Open Graph meta tags for social media sharing.
 - Hari 5: CRUD Page (model, migration, controller, React form)
-- Hari 6: CRUD Media (Spatie MediaLibrary, React Dropzone)
+- Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
+  - Cloud Storage Integration: Extend Spatie MediaLibrary to use cloud-based storage (e.g., AWS S3) for scalability and reduced server load.
+  - Automated Media Optimization: Implement image processing (e.g., using Spatie Image) to automatically compress, resize, and optimize media uploads for better performance.
+  - Advanced Metadata and Tagging: Add custom metadata fields (e.g., alt text, captions) and integrate with existing tagging system for improved accessibility and searchability.
+  - Frontend UX Improvements: Upgrade React Dropzone with features like multi-file uploads, progress bars, and previews using modern React components.
+  - Security Enhancements: Add file validation, sanitization, and signed URLs to prevent malicious uploads and enhance security.
+  - Seamless Integration and Extensibility: Make media CRUD modular with hooks for plugins, allowing custom media types and behaviors for future extensibility.
 - Hari 7: CRUD Menu & Menu Item, integrasi ke layout
 
 **Minggu 2**
