@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\MediaController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -27,13 +28,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:manage posts');
 
     // Media Library routes
-    Route::prefix('posts')->name('posts.')->group(function () {
-        Route::get('media-library', [PostController::class, 'mediaLibrary'])
+    Route::prefix('media')->name('media.')->group(function () {
+        Route::get('/', [MediaController::class, 'index'])
             ->middleware('can:manage posts')
-            ->name('media.library');
-        Route::post('media-library/upload', [PostController::class, 'uploadMedia'])
+            ->name('index');
+        Route::post('upload', [MediaController::class, 'upload'])
             ->middleware('can:manage posts')
-            ->name('media.upload');
+            ->name('upload');
+        Route::put('{media}', [MediaController::class, 'update'])
+            ->middleware('can:manage posts')
+            ->name('update');
+        Route::delete('{media}', [MediaController::class, 'destroy'])
+            ->middleware('can:manage posts')
+            ->name('destroy');
     });
     
     // Posts routes with status and revision management

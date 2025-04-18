@@ -99,12 +99,15 @@ class PostSeeder extends Seeder
                 'meta_description' => $postData['meta_description'],
                 'meta_keywords' => $postData['meta_keywords'],
                 'author_id' => $users->random()->id,
-                'category_id' => $categories->random()->id,
             ]);
+
+            // Assign kategori ke post menggunakan relasi categories (multi-category)
+            $randomCategories = $categories->random(rand(1, 3));
+            $post->categories()->attach($randomCategories);
 
             // Add some random tags
             $tags = ['backend', 'frontend', 'dev-ops', 'security', 'performance', 'design'];
-            $randomTags = array_rand(array_flip($tags), rand(2, 4));
+            $randomTags = array_rand(array_flip($tags), rand(1, 3));
             $post->syncTags($randomTags);
         }
     }

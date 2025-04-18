@@ -12,10 +12,10 @@ interface MetaFieldsProps {
   title?: string;
   metaDescription: string;
   metaKeywords: string;
-  featuredImage: File | null;
+  featuredImage: { id: number; url: string } | null;
   onMetaDescriptionChange: (value: string) => void;
   onMetaKeywordsChange: (value: string) => void;
-  onFeaturedImageChange: (file: File | null) => void;
+  onFeaturedImageChange: (value: { id: number; url: string } | null) => void;
   featuredImagePreview?: string;
   errors?: {
     meta_description?: string;
@@ -36,6 +36,7 @@ interface MediaLibraryResponse {
     url: string;
     name: string;
     created_at: string;
+    thumb_url?: string;
   }[];
   current_page: number;
   last_page: number;
@@ -68,6 +69,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
     url: string;
     name: string;
     created_at: string;
+    thumb_url?: string;
   }[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,7 +88,8 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
     setIsLoading(true);
     try {
       const res = await fetch(
-        route('posts.media.library', { page, search })
+        route('media.library', { page, search }),
+        { headers: { 'Accept': 'application/json' } }
       );
       const data: MediaLibraryResponse = await res.json();
       if (page === 1) {
@@ -118,7 +121,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
         throw new Error('CSRF token not found');
       }
   
-      const res = await fetch(route('posts.media.upload'), {
+      const res = await fetch(route('media.upload'), {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': csrfToken
@@ -128,26 +131,14 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
       });
   
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.message || `Upload failed with status: ${res.status}`);
+        throw new Error('Failed to upload file');
       }
   
       const media = await res.json();
-      
-      // Fetch the file from the URL to create a File object
-      const fileRes = await fetch(media.url);
-      if (!fileRes.ok) {
-        throw new Error('Failed to fetch uploaded file');
-      }
-  
-      const blob = await fileRes.blob();
-      const newFile = new File([blob], media.name, { type: blob.type });
-      
       // Update media library list
       setMediaList(prev => [media, ...prev]);
-      
-      // Set the file as featured image
-      onFeaturedImageChange(newFile);
+      // Set the file as featured image (pakai url langsung, tidak fetch ulang)
+      onFeaturedImageChange({ id: media.id, url: media.url }); 
     } catch (error) {
       console.error('Error uploading file:', error);
       // Show error in UI
@@ -358,7 +349,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                 onClick={async () => {
                   setMediaModalOpen(true);
                   if (mediaList.length === 0) {
-                    const res = await fetch(route('posts.media.library'));
+                    const res = await fetch(route('media.library'), { headers: { 'Accept': 'application/json' } });
                     const data = await res.json();
                     if (data.data) {
                       setMediaList(data.data);
@@ -467,17 +458,12 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                       key={media.id}
                       className="group relative aspect-square border rounded-lg overflow-hidden cursor-pointer hover:border-indigo-500 transition-all"
                       onClick={() => {
-                        fetch(media.url)
-                          .then(res => res.blob())
-                          .then(blob => {
-                            const file = new File([blob], media.name, { type: blob.type });
-                            onFeaturedImageChange(file);
-                            setMediaModalOpen(false);
-                          });
+                        onFeaturedImageChange({ id: media.id, url: media.thumb_url || media.url });
+                        setMediaModalOpen(false);
                       }}
                     >
                       <img
-                        src={media.url}
+                        src={media.thumb_url || media.url}
                         alt={media.name}
                         className="w-full h-full object-cover"
                       />

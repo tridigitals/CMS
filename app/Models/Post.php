@@ -25,7 +25,7 @@ class Post extends Model implements HasMedia
         'content',
         'meta_description',
         'meta_keywords',
-        'featured_image',
+        'featured_image_id',
         'author_id',
         'status'
     ];
@@ -58,20 +58,37 @@ class Post extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('featured_image')
-            ->singleFile()
-            ->registerMediaConversions(function (Media $media) {
-                $this->addMediaConversion('thumb')
-                    ->width(400)
-                    ->height(300);
-                $this->addMediaConversion('social')
-                    ->width(1200)
-                    ->height(630);
-            });
+            ->singleFile();
     }
 
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(300)
+            ->height(300)
+            ->format('webp')
+            ->sharpen(10)
+            ->nonQueued();
+
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->nonQueued();
+    }
+
+    /**
+     * Get the featured image media.
+     */
+    public function featuredImage()
+    {
+        return $this->belongsTo(\Spatie\MediaLibrary\MediaCollections\Models\Media::class, 'featured_image_id');
+    }
+
+    /**
+     * Accessor for featured image URL.
+     */
     public function getFeaturedImageUrlAttribute()
     {
-        return $this->getFirstMediaUrl('featured_image');
+        return $this->featuredImage ? $this->featuredImage->getUrl() : null;
     }
 
     public function getStructuredData(): array

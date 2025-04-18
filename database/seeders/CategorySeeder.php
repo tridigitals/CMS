@@ -37,6 +37,27 @@ class CategorySeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'Business',
+                'slug' => \Illuminate\Support\Str::slug('Business'),
+                'description' => 'Business topics',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Lifestyle',
+                'slug' => \Illuminate\Support\Str::slug('Lifestyle'),
+                'description' => 'Lifestyle topics',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Travel',
+                'slug' => \Illuminate\Support\Str::slug('Travel'),
+                'description' => 'Travel topics',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

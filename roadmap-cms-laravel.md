@@ -120,7 +120,6 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     Implement Open Graph meta tags for social media sharing.
 - Hari 5: CRUD Page (model, migration, controller, React form)
 - Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
-  - Cloud Storage Integration: Extend Spatie MediaLibrary to use cloud-based storage (e.g., AWS S3) for scalability and reduced server load.
   - Automated Media Optimization: Implement image processing (e.g., using Spatie Image) to automatically compress, resize, and optimize media uploads for better performance.
   - Advanced Metadata and Tagging: Add custom metadata fields (e.g., alt text, captions) and integrate with existing tagging system for improved accessibility and searchability.
   - Frontend UX Improvements: Upgrade React Dropzone with features like multi-file uploads, progress bars, and previews using modern React components.

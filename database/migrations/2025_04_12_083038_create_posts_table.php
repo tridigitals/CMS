@@ -19,8 +19,8 @@ return new class extends Migration
             $table->text('content');
             $table->string('meta_description')->nullable();
             $table->string('meta_keywords')->nullable();
-            // Add featured_image_media_id to revisions
-            $table->string('featured_image')->nullable();
+            $table->unsignedBigInteger('featured_image_id')->nullable();
+            $table->foreign('featured_image_id')->references('id')->on('media')->nullOnDelete();
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['draft', 'published', 'trash'])->default('draft');
             $table->softDeletes();
@@ -49,5 +49,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('posts');
+        Schema::dropIfExists('post_revisions');
     }
 };

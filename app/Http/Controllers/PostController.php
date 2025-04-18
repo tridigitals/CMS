@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PostController extends Controller
 {
@@ -127,7 +128,7 @@ class PostController extends Controller
             'category_ids.*' => 'integer|exists:categories,id',
             'meta_description' => 'nullable|string|max:160',
             'meta_keywords' => 'nullable|string',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Add image validation
+            'featured_image_id' => 'nullable|integer|exists:media,id',
             'tags' => 'nullable|array',
             'tags.*' => 'integer|exists:tags,id',
         ]);
@@ -143,13 +144,20 @@ class PostController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Handle featured image upload atau dari media library
+        if ($request->hasFile('featured_image')) {
+            // Upload file ke media library
+            $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
+            $post->featured_image_id = $media->id;
+            $post->save();
+        } elseif ($request->filled('featured_image_id')) {
+            // Pilih dari media library, hanya simpan id
+            $post->featured_image_id = $request->featured_image_id;
+            $post->save();
+        }
+
         // Sync categories
         $post->categories()->sync($request->category_ids);
-
-        // Handle featured image upload
-        if ($request->hasFile('featured_image')) {
-            $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
-        }
 
         if ($request->tags) {
             $tagNames = \Spatie\Tags\Tag::whereIn('id', $request->tags)->pluck('name')->toArray();
@@ -176,7 +184,7 @@ class PostController extends Controller
                 'status' => $post->status,
                 'meta_description' => $post->meta_description,
                 'meta_keywords' => $post->meta_keywords,
-                'featured_image_url' => $post->featured_image_url,
+                'featured_image_url' => $post->featuredImage ? $post->featuredImage->getUrl('thumb') : null,
                 'author' => [
                     'name' => $post->author->name,
                 ],
@@ -215,7 +223,7 @@ class PostController extends Controller
                 'status' => $post->status,
                 'meta_description' => $post->meta_description,
                 'meta_keywords' => $post->meta_keywords,
-                'featured_image_url' => $post->featured_image_url,
+                'featured_image_url' => $post->featuredImage ? $post->featuredImage->getUrl('thumb') : null,
                 'tags' => $post->tags->pluck('id')->toArray(),
                 'revisions' => $post->revisions->map(function ($revision) {
                     return [
@@ -259,13 +267,6 @@ class PostController extends Controller
             'tags.*' => 'integer|exists:tags,id',
         ]);
 
-        // Validate image separately if present
-        if ($request->hasFile('featured_image')) {
-            $request->validate([
-                'featured_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
-        }
-
         // Update post with validated data (excluding the file for now)
         $post->update([
             'title' => $request->title,
@@ -278,20 +279,20 @@ class PostController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Handle featured image upload atau dari media library
+        if ($request->hasFile('featured_image')) {
+            // Upload file ke media library
+            $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
+            $post->featured_image_id = $media->id;
+            $post->save();
+        } elseif ($request->filled('featured_image_id')) {
+            // Pilih dari media library, hanya simpan id
+            $post->featured_image_id = $request->featured_image_id;
+            $post->save();
+        }
+
         // Sync categories
         $post->categories()->sync($request->category_ids);
-
-        // Handle featured image upload if present
-        if ($request->hasFile('featured_image')) {
-            // Clear existing image before adding new one
-            $post->clearMediaCollection('featured_image');
-            $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
-        }
-
-        // Remove featured image if requested
-        if ($request->input('remove_featured_image')) {
-            $post->clearMediaCollection('featured_image');
-        }
 
         if ($request->tags) {
             $tagNames = \Spatie\Tags\Tag::whereIn('id', $request->tags)->pluck('name')->toArray();
@@ -372,7 +373,10 @@ class PostController extends Controller
 
     public function mediaLibrary(Request $request)
     {
-        $query = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('collection_name', 'featured_image')
+        if (! $request->wantsJson()) {
+            return Inertia::render('Media/Index');
+        }
+        $query = Media::where('collection_name', 'featured_image')
             ->orderBy('created_at', 'desc');
 
         // Apply search if provided
@@ -380,12 +384,15 @@ class PostController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Paginate results
         $media = $query->paginate(12)->through(function ($media) {
             return [
                 'id' => $media->id,
                 'url' => $media->getUrl(),
                 'name' => $media->name,
+                'mime_type' => $media->mime_type,
+                'custom_properties' => $media->custom_properties,
+                'thumb_url' => $media->getUrl('thumb'),
+                'webp_url' => $media->getUrl('webp'),
                 'created_at' => $media->created_at->format('Y-m-d H:i:s'),
             ];
         });
@@ -422,5 +429,41 @@ class PostController extends Controller
             'name' => $media->name,
             'created_at' => $media->created_at->format('Y-m-d H:i:s'),
         ]);
+    }
+
+    /**
+     * Update media metadata.
+     */
+    public function updateMedia(Request $request, Media $media)
+    {
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'alt_text' => 'nullable|string|max:255',
+            'caption' => 'nullable|string|max:255',
+        ]);
+
+        if ($request->has('name')) {
+            $media->name = $request->name;
+        }
+        $media->setCustomProperty('alt_text', $request->alt_text);
+        $media->setCustomProperty('caption', $request->caption);
+        $media->save();
+
+        return response()->json([
+            'id' => $media->id,
+            'url' => $media->getUrl(),
+            'name' => $media->name,
+            'custom_properties' => $media->custom_properties,
+            'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Delete a media file.
+     */
+    public function destroyMedia(Media $media)
+    {
+        $media->delete();
+        return response()->json(['success' => true]);
     }
 }

@@ -102,7 +102,8 @@ type InertiaFormData = {
   tags: number[];
   meta_description: string;
   meta_keywords: string;
-  featured_image: File | null;
+  featured_image_id?: number;
+  featured_image?: string | null;
 }
 
 type InertiaFormKey = keyof InertiaFormData;
@@ -132,7 +133,8 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
     tags: post.tags as number[],
     meta_description: post.meta_description || "",
     meta_keywords: post.meta_keywords || "",
-    featured_image: null,
+    featured_image_id: post.featured_image_url ? post.id : undefined,
+    featured_image: post.featured_image_url || "",
   });
 
   const [categories, setCategories] = useState<{ id: number; name: string }[]>(initialCategories);
@@ -183,6 +185,9 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
     data.tags.forEach(tag => formData.append('tags[]', String(tag)));
     formData.append('meta_description', data.meta_description);
     formData.append('meta_keywords', data.meta_keywords);
+    if (data.featured_image_id) {
+      formData.append('featured_image_id', String(data.featured_image_id));
+    }
     if (data.featured_image) {
       formData.append('featured_image', data.featured_image);
     }
@@ -395,18 +400,22 @@ const PostsEdit: React.FC<Props> = ({ post, categories: initialCategories, tagsL
             featuredImage={data.featured_image}
             onMetaDescriptionChange={(value) => setData('meta_description', value)}
             onMetaKeywordsChange={(value) => setData('meta_keywords', value)}
-            onFeaturedImageChange={(file) => {
-              setData('featured_image', file);
-              if (file) {
+            onFeaturedImageChange={(media) => {
+              if (media && media.id) {
+                setData('featured_image_id', media.id);
+                setData('featured_image', null);
+                setFeaturedImagePreview(media.url);
                 setRemoveFeaturedImage(false);
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setFeaturedImagePreview(reader.result as string);
-                };
-                reader.readAsDataURL(file);
+              } else if (media && media.url) {
+                setData('featured_image', media.url);
+                setData('featured_image_id', null);
+                setFeaturedImagePreview(media.url);
+                setRemoveFeaturedImage(false);
               } else {
-                setRemoveFeaturedImage(true);
+                setData('featured_image', null);
+                setData('featured_image_id', null);
                 setFeaturedImagePreview("");
+                setRemoveFeaturedImage(true);
               }
             }}
             featuredImagePreview={featuredImagePreview}
