@@ -119,7 +119,29 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     Implement structured data markup (Schema.org) for better search engine understanding.
     Implement Open Graph meta tags for social media sharing.
 - Hari 5: CRUD Page (model, migration, controller, React form)
-- Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
+  - **Database Structure**:
+    - Create `pages` table for main page content
+    - Create `page_blocks` table for storing building blocks of each page
+    - Create `page_templates` table for reusable page templates
+  - **Backend Components**:
+    - Implement `Page` model with relationships to blocks
+    - Create `PageBlock` model for individual content blocks
+    - Develop `PageTemplate` model for reusable templates
+    - Build `PageController` for basic CRUD operations
+    - Implement `PageBuilderController` for managing page builder components
+    - Create `PageTemplateController` for template management
+  - **Frontend Components**:
+    - Develop React page builder with drag-and-drop interface (Elementor-like)
+    - Create component library with various content blocks:
+      - Text blocks, Image blocks, Video blocks
+      - Form blocks, Custom HTML blocks
+      - Grid/column layouts
+    - Implement live preview of changes
+    - Add responsive design controls
+    - Create history/undo functionality
+    - Enable template saving and loading
+    - Integrate SEO metadata management
+- [x]Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
   - Automated Media Optimization: Implement image processing (e.g., using Spatie Image) to automatically compress, resize, and optimize media uploads for better performance.
   - Advanced Metadata and Tagging: Add custom metadata fields (e.g., alt text, captions) and integrate with existing tagging system for improved accessibility and searchability.
   - Frontend UX Improvements: Upgrade React Dropzone with features like multi-file uploads, progress bars, and previews using modern React components.
