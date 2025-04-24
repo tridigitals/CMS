@@ -37,6 +37,7 @@ interface MediaLibraryResponse {
     name: string;
     created_at: string;
     thumb_url?: string;
+    mime_type?: string;
   }[];
   current_page: number;
   last_page: number;
@@ -70,6 +71,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
     name: string;
     created_at: string;
     thumb_url?: string;
+    mime_type?: string;
   }[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,15 +90,11 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
     setIsLoading(true);
     try {
       const res = await fetch(
-        route('media.library', { page, search }),
+        route('media.library', { page, search, type: 'image' }),
         { headers: { 'Accept': 'application/json' } }
       );
       const data: MediaLibraryResponse = await res.json();
-      if (page === 1) {
-        setMediaList(data.data);
-      } else {
-        setMediaList(prev => [...prev, ...data.data]);
-      }
+      setMediaList(data.data);
       setCurrentPage(data.current_page);
       setLastPage(data.last_page);
       setTotalItems(data.total);
@@ -349,11 +347,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                 onClick={async () => {
                   setMediaModalOpen(true);
                   if (mediaList.length === 0) {
-                    const res = await fetch(route('media.library'), { headers: { 'Accept': 'application/json' } });
-                    const data = await res.json();
-                    if (data.data) {
-                      setMediaList(data.data);
-                    }
+                    fetchMedia(1, searchQuery);
                   }
                 }}
               >
@@ -453,7 +447,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                     No images found
                   </div>
                 ) : (
-                  mediaList.map((media) => (
+                  mediaList.filter(media => media.thumb_url && media.thumb_url.endsWith('.webp') && media.mime_type && media.mime_type.startsWith('image/')).map((media) => (
                     <div
                       key={media.id}
                       className="group relative aspect-square border rounded-lg overflow-hidden cursor-pointer hover:border-indigo-500 transition-all"
@@ -463,7 +457,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                       }}
                     >
                       <img
-                        src={media.thumb_url || media.url}
+                        src={media.thumb_url}
                         alt={media.name}
                         className="w-full h-full object-cover"
                       />
@@ -482,6 +476,28 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                   Loading...
                 </div>
               )}
+            </div>
+            {/* Pagination controls */}
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                disabled={currentPage === 1 || isLoading}
+                onClick={() => {
+                  if (currentPage > 1) fetchMedia(currentPage - 1, searchQuery);
+                }}
+                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              >
+                &laquo; Sebelumnya
+              </button>
+              <span className="px-2 py-1">{currentPage} / {lastPage}</span>
+              <button
+                disabled={currentPage === lastPage || isLoading}
+                onClick={() => {
+                  if (currentPage < lastPage) fetchMedia(currentPage + 1, searchQuery);
+                }}
+                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              >
+                Berikutnya &raquo;
+              </button>
             </div>
           </div>
         </div>

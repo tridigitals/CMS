@@ -26,12 +26,16 @@ class MediaController extends Controller
         }
 
         $media = $query->paginate(12)->through(function ($m) {
+            $isImage = strpos($m->mime_type, 'image/') === 0;
+            $webpUrl = $isImage && $m->hasGeneratedConversion('webp') ? $m->getUrl('webp') : $m->getUrl();
             return [
                 'id' => $m->id,
-                'url' => $m->getUrl(),
+                'url' => $webpUrl,
                 'name' => $m->name,
                 'mime_type' => $m->mime_type,
                 'custom_properties' => $m->custom_properties,
+                'thumb_url' => $m->hasGeneratedConversion('thumb') ? $m->getUrl('thumb') : null,
+                'webp_url' => $m->hasGeneratedConversion('webp') ? $m->getUrl('webp') : null,
                 'created_at' => $m->created_at->format('Y-m-d H:i:s'),
             ];
         });

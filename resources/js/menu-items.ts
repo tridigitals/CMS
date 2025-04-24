@@ -37,7 +37,13 @@ export const mainNavItems: NavItem[] = [
         href: '/comments',
         icon: LayoutGrid,
         permission: 'manage posts',
-      }
+      },
+      {
+        title: 'Media',
+        href: '/media',
+        icon: LayoutGrid,
+        permission: 'manage media',
+      },
     ],
   },
   {

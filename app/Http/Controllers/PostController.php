@@ -37,6 +37,8 @@ class PostController extends Controller
         return Inertia::render('Posts/Index', [
             'posts' => [
                 'published' => $publishedPosts->map(function ($post) {
+                    $media = $post->featuredImage;
+                    $webpUrl = $media && $media->hasGeneratedConversion('webp') ? $media->getUrl('webp') : ($media ? $media->getUrl() : null);
                     return [
                         'id' => $post->id,
                         'title' => $post->title,
@@ -50,9 +52,12 @@ class PostController extends Controller
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
                         'comments_count' => $post->comments_count,
+                        'featured_image_url' => $webpUrl,
                     ];
                 }),
                 'draft' => $draftPosts->map(function ($post) {
+                    $media = $post->featuredImage;
+                    $webpUrl = $media && $media->hasGeneratedConversion('webp') ? $media->getUrl('webp') : ($media ? $media->getUrl() : null);
                     return [
                         'id' => $post->id,
                         'title' => $post->title,
@@ -66,9 +71,12 @@ class PostController extends Controller
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
                         'comments_count' => $post->comments_count,
+                        'featured_image_url' => $webpUrl,
                     ];
                 }),
                 'trash' => $trashedPosts->map(function ($post) {
+                    $media = $post->featuredImage;
+                    $webpUrl = $media && $media->hasGeneratedConversion('webp') ? $media->getUrl('webp') : ($media ? $media->getUrl() : null);
                     return [
                         'id' => $post->id,
                         'title' => $post->title,
@@ -82,6 +90,7 @@ class PostController extends Controller
                         'created_at' => $post->created_at ? $post->created_at->format('Y-m-d H:i:s') : null,
                         'updated_at' => $post->updated_at ? $post->updated_at->format('Y-m-d H:i:s') : null,
                         'comments_count' => $post->comments_count,
+                        'featured_image_url' => $webpUrl,
                     ];
                 }),
             ],
@@ -150,6 +159,13 @@ class PostController extends Controller
             $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
             $post->featured_image_id = $media->id;
             $post->save();
+            // Hapus file original jika konversi webp sudah ada
+            if ($media->hasGeneratedConversion('webp')) {
+                $originalPath = $media->getPath();
+                if (file_exists($originalPath) && pathinfo($originalPath, PATHINFO_EXTENSION) !== 'webp') {
+                    @unlink($originalPath);
+                }
+            }
         } elseif ($request->filled('featured_image_id')) {
             // Pilih dari media library, hanya simpan id
             $post->featured_image_id = $request->featured_image_id;
@@ -184,7 +200,7 @@ class PostController extends Controller
                 'status' => $post->status,
                 'meta_description' => $post->meta_description,
                 'meta_keywords' => $post->meta_keywords,
-                'featured_image_url' => $post->featuredImage ? $post->featuredImage->getUrl('thumb') : null,
+                'featured_image_url' => $post->featuredImage ? ($post->featuredImage->hasGeneratedConversion('webp') ? $post->featuredImage->getUrl('webp') : $post->featuredImage->getUrl()) : null,
                 'author' => [
                     'name' => $post->author->name,
                 ],
@@ -285,6 +301,13 @@ class PostController extends Controller
             $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
             $post->featured_image_id = $media->id;
             $post->save();
+            // Hapus file original jika konversi webp sudah ada
+            if ($media->hasGeneratedConversion('webp')) {
+                $originalPath = $media->getPath();
+                if (file_exists($originalPath) && pathinfo($originalPath, PATHINFO_EXTENSION) !== 'webp') {
+                    @unlink($originalPath);
+                }
+            }
         } elseif ($request->filled('featured_image_id')) {
             // Pilih dari media library, hanya simpan id
             $post->featured_image_id = $request->featured_image_id;
@@ -377,6 +400,7 @@ class PostController extends Controller
             return Inertia::render('Media/Index');
         }
         $query = Media::where('collection_name', 'featured_image')
+            ->where('mime_type', 'like', 'image/%')
             ->orderBy('created_at', 'desc');
 
         // Apply search if provided
