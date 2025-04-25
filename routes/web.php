@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\MediaController;
 
 Route::get('/', function () {
@@ -55,6 +56,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/posts/{post}/revisions/{revision}/restore', [\App\Http\Controllers\PostController::class, 'restoreRevision'])
         ->middleware('can:manage posts')
         ->name('posts.revisions.restore');
+
+    // Pages routes with status management
+    Route::middleware('can:manage pages')->group(function () {
+        Route::resource('pages', PageController::class);
+        Route::post('/pages/{page}/restore', [PageController::class, 'restore'])->name('pages.restore');
+        Route::delete('/pages/{page}/force-delete', [PageController::class, 'forceDelete'])->name('pages.forceDelete');
+    });
 
     // Comment routes
     Route::prefix('comments')->name('comments.')->group(function () {

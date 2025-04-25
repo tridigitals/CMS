@@ -47,6 +47,18 @@ export const mainNavItems: NavItem[] = [
     ],
   },
   {
+    title: 'Pages Management',
+    icon: LayoutGrid,
+    children: [
+      {
+        title: 'Pages',
+        href: '/pages',
+        icon: LayoutGrid,
+        permission: 'manage pages',
+      },
+    ],
+  },
+  {
     title: 'Account Management',
     icon: User,
     children: [
