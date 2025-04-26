@@ -33,6 +33,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [MediaController::class, 'index'])
             ->middleware('can:manage posts')
             ->name('index');
+        Route::get('/meta-fields', [MediaController::class, 'getForMetaFields'])
+            ->middleware('can:manage posts')
+            ->name('meta-fields');
         Route::post('upload', [MediaController::class, 'upload'])
             ->middleware('can:manage posts')
             ->name('upload');
@@ -44,10 +47,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('destroy');
     });
     
-    // Posts routes with status and revision management
+    // Posts routes with revision management
     Route::middleware('can:manage posts')->group(function () {
         Route::resource('posts', PostController::class);
-        Route::post('/posts/{post}/status', [PostController::class, 'updateStatus'])->name('posts.status');
         Route::post('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
         Route::delete('/posts/{post}/force-delete', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
         Route::get('/posts/{post}/revisions', [PostController::class, 'revisions'])->name('posts.revisions');
@@ -57,11 +59,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:manage posts')
         ->name('posts.revisions.restore');
 
-    // Pages routes with status management
+    // Pages routes
     Route::middleware('can:manage pages')->group(function () {
         Route::resource('pages', PageController::class);
         Route::post('/pages/{page}/restore', [PageController::class, 'restore'])->name('pages.restore');
         Route::delete('/pages/{page}/force-delete', [PageController::class, 'forceDelete'])->name('pages.forceDelete');
+        Route::post('/pages/{page}/status', [PageController::class, 'updateStatus'])->name('pages.updateStatus');
     });
 
     // Comment routes

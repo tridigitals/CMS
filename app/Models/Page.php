@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Page extends Model implements HasMedia
 {
@@ -18,11 +19,12 @@ class Page extends Model implements HasMedia
         'content',
         'meta_description',
         'meta_keywords',
+        'featured_image_id',
+        'author_id',
         'status',
         'editor_type',
-        'author_id',
         'parent_id',
-        'order',
+        'order'
     ];
 
     protected $casts = [
@@ -33,9 +35,42 @@ class Page extends Model implements HasMedia
         'deleted_at' => 'datetime',
     ];
 
-    public function author()
+    protected $appends = ['featured_image_url'];
+
+    public function registerMediaCollections(): void
     {
-        return $this->belongsTo(User::class, 'author_id');
+        $this->addMediaCollection('featured_image')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(300)
+            ->height(300)
+            ->format('webp')
+            ->sharpen(10)
+            ->nonQueued();
+
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->nonQueued();
+    }
+
+    /**
+     * Get the featured image media.
+     */
+    public function featuredImage()
+    {
+        return $this->belongsTo(\Spatie\MediaLibrary\MediaCollections\Models\Media::class, 'featured_image_id');
+    }
+
+    /**
+     * Accessor for featured image URL.
+     */
+    public function getFeaturedImageUrlAttribute()
+    {
+        return $this->featuredImage ? $this->featuredImage->getUrl() : null;
     }
 
     public function parent()
@@ -46,6 +81,11 @@ class Page extends Model implements HasMedia
     public function children()
     {
         return $this->hasMany(Page::class, 'parent_id');
+    }
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'author_id');
     }
 
     public function scopePublished($query)
@@ -61,17 +101,5 @@ class Page extends Model implements HasMedia
     public function scopeTrash($query)
     {
         return $query->onlyTrashed();
-    }
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('featured_image')
-            ->singleFile()
-            ->withResponsiveImages();
-    }
-
-    public function getFeaturedImageAttribute()
-    {
-        return $this->getFirstMedia('featured_image');
     }
 }

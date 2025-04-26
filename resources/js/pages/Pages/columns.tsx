@@ -121,37 +121,23 @@ export const getPageColumns = (options: PageColumnsOptions = {}): ColumnDef<Page
       cell: ({ row }) => {
         const page = row.original;
 
-        // Handler for status change (publish, unpublish, move to trash)
-        const handleStatusChange = async (newStatus: string) => {
+        // Handler for moving to trash
+        const handleTrash = async () => {
           const result = await Swal.fire({
             title: "Are you sure?",
-            text: `Do you want to change the status to ${newStatus}?`,
-            icon: "question",
+            text: "This page will be moved to trash",
+            icon: "warning",
             showCancelButton: true,
-            confirmButtonText: "Yes, change it!",
+            confirmButtonText: "Yes, move to trash",
             cancelButtonText: "Cancel",
+            confirmButtonColor: "#dc2626",
           });
 
           if (result.isConfirmed) {
             try {
-              const response = await fetch(`/pages/${page.id}/status`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
-                },
-                body: JSON.stringify({ status: newStatus }),
-              });
-
-              if (response.ok) {
-                await Swal.fire("Success", "Page status updated!", "success");
-                window.location.reload();
-              } else {
-                await Swal.fire("Error", "Failed to update page status.", "error");
-              }
+              router.delete(`/pages/${page.id}`);
             } catch (error) {
-              await Swal.fire("Error", "Failed to update page status.", "error");
+              await Swal.fire("Error", "Failed to move page to trash.", "error");
             }
           }
         };
@@ -169,32 +155,18 @@ export const getPageColumns = (options: PageColumnsOptions = {}): ColumnDef<Page
 
           if (result.isConfirmed) {
             try {
-              const response = await fetch(`/pages/${page.id}/restore`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
-                },
-              });
-
-              if (response.ok) {
-                await Swal.fire("Success", "Page restored!", "success");
-                window.location.reload();
-              } else {
-                await Swal.fire("Error", "Failed to restore page.", "error");
-              }
+              router.post(`/pages/${page.id}/restore`);
             } catch (error) {
               await Swal.fire("Error", "Failed to restore page.", "error");
             }
           }
         };
 
-        // Handler for force delete
-        const handleForceDelete = async () => {
+        // Handler for permanent delete
+        const handleDelete = async () => {
           const result = await Swal.fire({
             title: "Are you sure?",
-            text: "This action cannot be undone!",
+            text: "This page will be permanently deleted!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Yes, delete it!",
@@ -204,21 +176,7 @@ export const getPageColumns = (options: PageColumnsOptions = {}): ColumnDef<Page
 
           if (result.isConfirmed) {
             try {
-              const response = await fetch(`/pages/${page.id}/force-delete`, {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                  "X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
-                },
-              });
-
-              if (response.ok) {
-                await Swal.fire("Deleted!", "Page has been deleted.", "success");
-                window.location.reload();
-              } else {
-                await Swal.fire("Error", "Failed to delete page.", "error");
-              }
+              router.delete(`/pages/${page.id}/force-delete`);
             } catch (error) {
               await Swal.fire("Error", "Failed to delete page.", "error");
             }
@@ -246,16 +204,54 @@ export const getPageColumns = (options: PageColumnsOptions = {}): ColumnDef<Page
               {options.showActions && (
                 <>
                   {page.status !== "published" && (
-                    <DropdownMenuItem onClick={() => handleStatusChange("published")}>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const result = await Swal.fire({
+                          title: "Are you sure?",
+                          text: "This page will be published.",
+                          icon: "question",
+                          showCancelButton: true,
+                          confirmButtonText: "Yes, publish it!",
+                          cancelButtonText: "Cancel",
+                          confirmButtonColor: "#16a34a",
+                        });
+                        if (result.isConfirmed) {
+                          if (options.onStatusChange) {
+                            options.onStatusChange(page.id, "published");
+                          } else {
+                            router.patch(`/pages/${page.id}`, { status: "published" });
+                          }
+                        }
+                      }}
+                    >
                       <Icon iconNode={CheckCircle} className="mr-2 h-4 w-4" /> Publish
                     </DropdownMenuItem>
                   )}
-                  {page.status !== "draft" && (
-                    <DropdownMenuItem onClick={() => handleStatusChange("draft")}>
+                  {page.status === "published" && (
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const result = await Swal.fire({
+                          title: "Are you sure?",
+                          text: "This page will be moved to draft.",
+                          icon: "question",
+                          showCancelButton: true,
+                          confirmButtonText: "Yes, move to draft!",
+                          cancelButtonText: "Cancel",
+                          confirmButtonColor: "#fbbf24",
+                        });
+                        if (result.isConfirmed) {
+                          if (options.onStatusChange) {
+                            options.onStatusChange(page.id, "draft");
+                          } else {
+                            router.patch(`/pages/${page.id}`, { status: "draft" });
+                          }
+                        }
+                      }}
+                    >
                       <Icon iconNode={FileText} className="mr-2 h-4 w-4" /> Move to Draft
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => handleStatusChange("trash")} className="text-red-600">
+                  <DropdownMenuItem onClick={handleTrash} className="text-red-600">
                     <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
                   </DropdownMenuItem>
                 </>
@@ -265,7 +261,7 @@ export const getPageColumns = (options: PageColumnsOptions = {}): ColumnDef<Page
                   <DropdownMenuItem onClick={handleRestore}>
                     <RotateCcw className="mr-2 h-4 w-4" /> Restore
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleForceDelete} className="text-red-600">
+                  <DropdownMenuItem onClick={handleDelete} className="text-red-600">
                     <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
                   </DropdownMenuItem>
                 </>

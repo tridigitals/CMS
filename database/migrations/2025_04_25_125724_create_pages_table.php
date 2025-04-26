@@ -16,15 +16,26 @@ return new class extends Migration
             $table->string('title');
             $table->string('slug')->unique();
             $table->longText('content')->nullable();
-            $table->text('meta_description')->nullable();
-            $table->text('meta_keywords')->nullable();
-            $table->enum('status', ['draft', 'published'])->default('draft');
-            $table->enum('editor_type', ['classic', 'pagebuilder'])->default('classic');
-            $table->foreignId('author_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('parent_id')->nullable()->constrained('pages')->onDelete('set null');
+            $table->string('status')->default('draft');
+            $table->string('meta_description')->nullable();
+            $table->string('meta_keywords')->nullable();
+            $table->string('editor_type')->default('classic');
+            $table->unsignedBigInteger('featured_image_id')->nullable();
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->integer('order')->default(0);
-            $table->timestamps();
+            $table->unsignedBigInteger('author_id');
             $table->softDeletes();
+            $table->timestamps();
+
+            $table->foreign('parent_id')
+                ->references('id')
+                ->on('pages')
+                ->onDelete('set null');
+
+            $table->foreign('author_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 

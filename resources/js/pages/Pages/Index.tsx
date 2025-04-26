@@ -30,11 +30,9 @@ const PagesIndex: React.FC<Props> = ({ pages, counts }) => {
     const [activeTab, setActiveTab] = useState("published");
 
     const handleStatusChange = (pageId: number, newStatus: string) => {
-        if (confirm("Are you sure you want to change this page's status?")) {
-            router.post(`/pages/${pageId}/status`, {
-                status: newStatus,
-            });
-        }
+        router.post(`/pages/${pageId}/status`, {
+            status: newStatus,
+        });
     };
 
     const handleDelete = (pageId: number) => {
@@ -82,30 +80,24 @@ const PagesIndex: React.FC<Props> = ({ pages, counts }) => {
                         <DataTable
                             columns={getPageColumns({
                                 onStatusChange: handleStatusChange,
-                                onDelete: handleDelete,
                                 showActions: true,
-                                status: "published"
                             })}
                             data={pages.published}
                             searchKey="title"
                             placeholder="Search published pages..."
                         />
                     </TabsContent>
-
                     <TabsContent value="draft">
                         <DataTable
                             columns={getPageColumns({
                                 onStatusChange: handleStatusChange,
-                                onDelete: handleDelete,
                                 showActions: true,
-                                status: "draft"
                             })}
                             data={pages.draft}
                             searchKey="title"
                             placeholder="Search draft pages..."
                         />
                     </TabsContent>
-
                     <TabsContent value="trash">
                         <DataTable
                             columns={getPageColumns({

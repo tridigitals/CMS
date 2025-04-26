@@ -1,130 +1,89 @@
 import React from "react";
 import { PageProps, BreadcrumbItem } from "@/types";
-import { Head, Link } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { format } from "date-fns";
+import * as dateFnsTz from "date-fns-tz";
 
 interface Props extends PageProps {
-    page: {
-        id: number;
-        title: string;
-        slug: string;
-        content: string;
-        meta_description: string;
-        meta_keywords: string;
-        status: 'draft' | 'published';
-        editor_type: 'classic' | 'pagebuilder';
-        author: {
-            name: string;
-        };
-        created_at: string;
-        updated_at: string;
-        featured_image_url: string | null;
+  page: {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    meta_description: string;
+    meta_keywords: string;
+    status: string;
+    editor_type: string;
+    created_at: string;
+    updated_at: string;
+    featured_image_url?: string | null;
+    author: {
+      name: string;
     };
+  };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Dashboard", href: "/dashboard" },
-    { title: "Pages", href: "/pages" },
-    { title: "View Page", href: "#" },
+  { title: "Dashboard", href: "/dashboard" },
+  { title: "Pages", href: "/pages" },
+  { title: "View Page", href: "#" },
 ];
 
 const PagesShow: React.FC<Props> = ({ page }) => {
-    return (
-        <AppLayout
-            title="View Page"
-            renderHeader={() => (
-                <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    View Page
-                </h2>
-            )}
-            breadcrumbs={breadcrumbs}
-        >
-            <Head title="View Page" />
-
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
-                        {/* Header Section */}
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                                        {page.title}
-                                    </h1>
-                                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                        Slug: {page.slug}
-                                    </p>
-                                </div>
-                                <div className="flex space-x-2">
-                                    <Link href={`/pages/${page.id}/edit`}>
-                                        <Button variant="outline">Edit Page</Button>
-                                    </Link>
-                                </div>
-                            </div>
-                            <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <span>By {page.author.name}</span>
-                                <span className="mx-2">•</span>
-                                <span>Created: {page.created_at}</span>
-                                <span className="mx-2">•</span>
-                                <span>Last updated: {page.updated_at}</span>
-                                <span className="mx-2">•</span>
-                                <span className="capitalize">Status: {page.status}</span>
-                                <span className="mx-2">•</span>
-                                <span className="capitalize">Editor: {page.editor_type}</span>
-                            </div>
-                        </div>
-
-                        {/* Featured Image */}
-                        {page.featured_image_url && (
-                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                                <img
-                                    src={page.featured_image_url}
-                                    alt={page.title}
-                                    className="max-w-full h-auto rounded-lg shadow-lg"
-                                />
-                            </div>
-                        )}
-
-                        {/* Meta Information */}
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                                Meta Information
-                            </h2>
-                            <div className="space-y-2">
-                                <p className="text-sm">
-                                    <span className="font-medium">Description: </span>
-                                    {page.meta_description}
-                                </p>
-                                <p className="text-sm">
-                                    <span className="font-medium">Keywords: </span>
-                                    {page.meta_keywords}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                                Content
-                            </h2>
-                            {page.editor_type === 'classic' ? (
-                                <div 
-                                    className="prose dark:prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: page.content }}
-                                />
-                            ) : (
-                                <div 
-                                    className="gjs-content"
-                                    dangerouslySetInnerHTML={{ __html: page.content }}
-                                />
-                            )}
-                        </div>
-                    </div>
-                </div>
+  return (
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title={page.title}>
+        <meta name="description" content={page.meta_description} />
+        <meta name="keywords" content={page.meta_keywords} />
+        <meta property="og:title" content={page.title} />
+        <meta property="og:description" content={page.meta_description} />
+        {page.featured_image_url && (
+          <meta property="og:image" content={page.featured_image_url} />
+        )}
+        <meta property="og:type" content="article" />
+      </Head>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card className="overflow-hidden">
+          {page.featured_image_url && (
+            <div className="w-full h-[400px] relative">
+              <img
+                src={page.featured_image_url}
+                alt={page.title}
+                className="w-full h-full object-cover"
+              />
             </div>
-        </AppLayout>
-    );
+          )}
+          <div className="p-8">
+            <h1 className="text-3xl font-bold text-gray-900">{page.title}</h1>
+            <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+              <div>
+                Published: {format(
+                  dateFnsTz.toZonedTime(new Date(page.created_at), 'Asia/Jakarta'),
+                  'MMMM d, yyyy HH:mm (zzz)'
+                )}
+              </div>
+              <div>Author: {page.author.name}</div>
+            </div>
+            <div className="mt-8 prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: page.content }} />
+            <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-gray-500">
+              <div>
+                <span className="font-medium">Status:</span> {page.status}
+              </div>
+              <div>
+                <span className="font-medium">Last Updated:</span>{" "}
+                {format(
+                  dateFnsTz.toZonedTime(new Date(page.updated_at), 'Asia/Jakarta'),
+                  'MMMM d, yyyy HH:mm (zzz)'
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </AppLayout>
+  );
 };
 
 export default PagesShow;

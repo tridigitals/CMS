@@ -34,18 +34,32 @@ import 'grapesjs/dist/css/grapes.min.css';
 import gjsPresetWebpage from 'grapesjs-preset-webpage';
 import gjsBlocksBasic from 'grapesjs-blocks-basic';
 
+interface Props extends PageProps {
+    errors: Partial<{
+        title: string;
+        slug: string;
+        content: string;
+        meta_description: string;
+        meta_keywords: string;
+        featured_image: string;
+    }>;
+}
+
 type PageForm = {
     title: string;
     slug: string;
     content: string;
+    status: 'draft' | 'published';
     meta_description: string;
     meta_keywords: string;
-    status: 'draft' | 'published';
     editor_type: 'classic' | 'pagebuilder';
     parent_id: number | null;
     order: number;
-    featured_image: File | null;
+    featured_image: FeaturedImageValue;
+    featured_image_id: number | null;
 }
+
+type FeaturedImageValue = { id: number; url: string } | File | null;
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/dashboard" },
@@ -63,21 +77,22 @@ function slugify(text: string) {
         .replace(/\-\-+/g, "-");
 }
 
-const PagesCreate: React.FC = () => {
-    const { data, setData, post, processing, errors } = useForm<PageForm>({
-        title: "",
-        slug: "",
-        content: "",
-        meta_description: "",
-        meta_keywords: "",
-        status: "draft",
-        editor_type: "classic",
+const PagesCreate: React.FC<Props> = ({ errors }) => {
+    const { data, setData, post, processing } = useForm<PageForm>({
+        title: '',
+        slug: '',
+        content: '',
+        status: 'draft',
+        meta_description: '',
+        meta_keywords: '',
+        editor_type: 'classic',
         parent_id: null,
         order: 0,
-        featured_image: null,
+        featured_image: null as FeaturedImageValue,
+        featured_image_id: null
     });
-
     const [featuredImagePreview, setFeaturedImagePreview] = useState<string>("");
+    const [removeFeaturedImage, setRemoveFeaturedImage] = useState(false);
     const [isSlugEdited, setIsSlugEdited] = useState(false);
     const [editor, setEditor] = useState<any>(null);
 
@@ -92,7 +107,8 @@ const PagesCreate: React.FC = () => {
     };
 
     const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setData("slug", e.target.value);
+        const value = slugify(e.target.value);
+        setData("slug", value);
         setIsSlugEdited(true);
     };
 
@@ -127,29 +143,32 @@ const PagesCreate: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const formData = new FormData();
-        Object.keys(data).forEach(key => {
-            if (data[key as keyof PageForm] !== null) {
-                if (key === 'featured_image' && data.featured_image) {
-                    formData.append(key, data.featured_image);
-                } else {
-                    formData.append(key, String(data[key as keyof PageForm]));
-                }
-            }
-        });
-
-        router.post("/pages", formData, {
-            forceFormData: true,
-        });
+    const handleFeaturedImageChange = (media: { id?: number; url?: string } | File | null) => {
+        if (media instanceof File) {
+            setData('featured_image', media);
+            setData('featured_image_id', null);
+            setFeaturedImagePreview(URL.createObjectURL(media));
+            setRemoveFeaturedImage(false);
+        } else if (media && typeof media === 'object' && 'id' in media && 'url' in media) {
+            setData('featured_image', { id: media.id ?? 0, url: media.url ?? "" });
+            setData('featured_image_id', media.id ?? null);
+            setFeaturedImagePreview(media.url ?? "");
+            setRemoveFeaturedImage(false);
+        } else {
+            setData('featured_image', null);
+            setData('featured_image_id', null);
+            setFeaturedImagePreview("");
+            setRemoveFeaturedImage(true);
+        }
     };
 
-    const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setData("featured_image", e.target.files[0]);
-            setFeaturedImagePreview(URL.createObjectURL(e.target.files[0]));
-        }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post('/pages', {
+            onSuccess: () => {
+                // Handle success
+            },
+        });
     };
 
     return (
@@ -182,7 +201,7 @@ const PagesCreate: React.FC = () => {
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                                     />
                                     {errors.title && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                                        <div className="text-red-600 text-xs mt-1">{errors.title}</div>
                                     )}
                                 </div>
 
@@ -191,15 +210,27 @@ const PagesCreate: React.FC = () => {
                                     <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Slug
                                     </label>
-                                    <input
-                                        type="text"
-                                        id="slug"
-                                        value={data.slug}
-                                        onChange={handleSlugChange}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            id="slug"
+                                            value={data.slug}
+                                            onChange={handleSlugChange}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="text-xs px-2 py-1 border rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                            onClick={() => { setData('slug', slugify(data.title)); setIsSlugEdited(false); }}
+                                            title="Reset slug sesuai judul"
+                                        >
+                                            Reset Slug
+                                        </button>
+                                    </div>
                                     {errors.slug && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+                                        <div className="text-red-600 text-xs mt-1">
+                                            {Array.isArray(errors.slug) ? errors.slug[0] : errors.slug}
+                                        </div>
                                     )}
                                 </div>
 
@@ -269,57 +300,26 @@ const PagesCreate: React.FC = () => {
                                         <div id="gjs" style={{ height: '700px', border: '2px solid #ccc' }}></div>
                                     )}
                                     {errors.content && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.content}</p>
+                                        <div className="text-red-600 text-xs mt-1">{errors.content}</div>
                                     )}
                                 </div>
 
                                 {/* Meta Fields */}
                                 <MetaFields
-                                    metaDescription={data.meta_description || ''}
-                                    metaKeywords={data.meta_keywords || ''}
-                                    title={data.title || ''}
-                                    featuredImage={null}
+                                    title={data.title}
+                                    metaDescription={data.meta_description}
+                                    metaKeywords={data.meta_keywords}
+                                    featuredImage={
+                                        data.featured_image instanceof File
+                                            ? (featuredImagePreview ? { id: 0, url: featuredImagePreview } : null)
+                                            : data.featured_image
+                                    }
                                     onMetaDescriptionChange={(value) => setData('meta_description', value)}
                                     onMetaKeywordsChange={(value) => setData('meta_keywords', value)}
-                                    onFeaturedImageChange={(file) => {
-                                        if (file instanceof File) {
-                                            setData('featured_image', file);
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setFeaturedImagePreview(reader.result as string);
-                                            };
-                                            reader.readAsDataURL(file);
-                                        } else {
-                                            setData('featured_image', null);
-                                            setFeaturedImagePreview('');
-                                        }
-                                    }}
+                                    onFeaturedImageChange={handleFeaturedImageChange}
                                     featuredImagePreview={featuredImagePreview}
                                     errors={errors}
                                 />
-
-                                {/* Featured Image */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Featured Image
-                                    </label>
-                                    <input
-                                        type="file"
-                                        onChange={handleFeaturedImageChange}
-                                        accept="image/*"
-                                        className="mt-1 block w-full"
-                                    />
-                                    {featuredImagePreview && (
-                                        <img
-                                            src={featuredImagePreview}
-                                            alt="Preview"
-                                            className="mt-2 h-32 w-auto object-cover"
-                                        />
-                                    )}
-                                    {errors.featured_image && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.featured_image}</p>
-                                    )}
-                                </div>
 
                                 {/* Status */}
                                 <div>
@@ -334,16 +334,19 @@ const PagesCreate: React.FC = () => {
                                         <option value="draft">Draft</option>
                                         <option value="published">Published</option>
                                     </select>
+                                    {errors.status && (
+                                        <div className="text-red-600 text-xs mt-1">{errors.status}</div>
+                                    )}
                                 </div>
 
                                 {/* Submit Button */}
                                 <div className="flex justify-end mt-6">
                                     <Button
                                         type="submit"
-                                        disabled={processing}
                                         className="ml-3"
+                                        disabled={processing}
                                     >
-                                        {processing ? 'Creating...' : 'Create Page'}
+                                        {processing ? 'Saving...' : 'Create Page'}
                                     </Button>
                                 </div>
                             </div>

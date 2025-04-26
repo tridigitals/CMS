@@ -44,6 +44,41 @@ class MediaController extends Controller
     }
 
     /**
+     * Get media for MetaFields component
+     */
+    public function getForMetaFields(Request $request)
+    {
+        $query = Media::where('collection_name', 'featured_image')
+            ->where('mime_type', 'like', 'image/%')
+            ->orderBy('created_at', 'desc');
+
+        // Apply search if provided
+        if ($request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $media = $query->paginate(12)->through(function ($media) {
+            return [
+                'id' => $media->id,
+                'url' => $media->getUrl(),
+                'name' => $media->name,
+                'mime_type' => $media->mime_type,
+                'custom_properties' => $media->custom_properties,
+                'thumb_url' => $media->hasGeneratedConversion('thumb') ? $media->getUrl('thumb') : null,
+                'webp_url' => $media->hasGeneratedConversion('webp') ? $media->getUrl('webp') : null,
+                'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+            ];
+        });
+
+        return response()->json([
+            'data' => $media->items(),
+            'current_page' => $media->currentPage(),
+            'last_page' => $media->lastPage(),
+            'total' => $media->total(),
+        ]);
+    }
+
+    /**
      * Upload a media file.
      */
     public function upload(Request $request)

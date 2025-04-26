@@ -50,20 +50,14 @@ interface Props extends PageProps {
             name: string;
         };
     };
-}
-
-type PageForm = {
-    title: string;
-    slug: string;
-    content: string;
-    meta_description: string;
-    meta_keywords: string;
-    status: 'draft' | 'published';
-    editor_type: 'classic' | 'pagebuilder';
-    parent_id: number | null;
-    order: number;
-    featured_image: File | null;
-    _method: string;
+    errors: Partial<{
+        title: string;
+        slug: string;
+        content: string;
+        meta_description: string;
+        meta_keywords: string;
+        featured_image: string;
+    }>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -82,23 +76,25 @@ function slugify(text: string) {
         .replace(/\-\-+/g, "-");
 }
 
-const PagesEdit: React.FC<Props> = ({ page }) => {
-    const { data, setData, post, processing, errors } = useForm<PageForm>({
-        title: page.title,
-        slug: page.slug,
-        content: page.content,
-        meta_description: page.meta_description,
-        meta_keywords: page.meta_keywords,
-        status: page.status,
-        editor_type: page.editor_type,
-        parent_id: page.parent_id,
-        order: page.order,
-        featured_image: null,
-        _method: 'PUT',
+const PagesEdit: React.FC<Props> = ({ page, errors }) => {
+    // console.log('ERRORS:', errors);
+    const { data, setData, patch, processing } = useForm({
+        title: page.title || '',
+        slug: page.slug || '',
+        content: page.content || '',
+        status: page.status || 'draft',
+        meta_description: page.meta_description || '',
+        meta_keywords: page.meta_keywords || '',
+        editor_type: page.editor_type || 'classic',
+        parent_id: page.parent_id || null,
+        order: page.order || 0,
+        featured_image: page.featured_image_url ? { id: 0, url: page.featured_image_url } : null,
+        featured_image_id: null
     });
 
-    const [featuredImagePreview, setFeaturedImagePreview] = useState<string>(page.featured_image_url || "");
-    const [isSlugEdited, setIsSlugEdited] = useState(true);
+    const [featuredImagePreview, setFeaturedImagePreview] = useState<string>(data.featured_image?.url || "");
+    const [removeFeaturedImage, setRemoveFeaturedImage] = useState(false);
+    const [isSlugEdited, setIsSlugEdited] = useState(false);
     const [editor, setEditor] = useState<any>(null);
 
     const handleEditorChange = (content: string) => {
@@ -112,7 +108,8 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
     };
 
     const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setData("slug", e.target.value);
+        const value = slugify(e.target.value);
+        setData("slug", value);
         setIsSlugEdited(true);
     };
 
@@ -142,38 +139,29 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
         });
     };
 
-    const handleEditorTypeChange = (type: 'classic' | 'pagebuilder') => {
-        setData('editor_type', type);
-        if (type === 'pagebuilder') {
-            setTimeout(() => {
-                initGrapesJS('#gjs');
-            }, 100);
+    const handleFeaturedImageChange = (media: { id?: number; url?: string } | null) => {
+        if (media && media.id) {
+            setData('featured_image_id', media.id);
+            setData('featured_image', { id: media.id, url: media.url || '' });
+            setRemoveFeaturedImage(false);
+        } else if (media && media.url) {
+            setData('featured_image', { id: 0, url: media.url });
+            setData('featured_image_id', null);
+            setRemoveFeaturedImage(false);
+        } else {
+            setData('featured_image', null);
+            setData('featured_image_id', null);
+            setRemoveFeaturedImage(true);
         }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData();
-        Object.keys(data).forEach(key => {
-            if (data[key as keyof PageForm] !== null) {
-                if (key === 'featured_image' && data.featured_image) {
-                    formData.append(key, data.featured_image);
-                } else {
-                    formData.append(key, String(data[key as keyof PageForm]));
-                }
-            }
+        patch(`/pages/${page.id}`, {
+            onSuccess: () => {
+                // Handle success
+            },
         });
-
-        router.post(`/pages/${page.id}`, formData, {
-            forceFormData: true,
-        });
-    };
-
-    const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setData("featured_image", e.target.files[0]);
-            setFeaturedImagePreview(URL.createObjectURL(e.target.files[0]));
-        }
     };
 
     useEffect(() => {
@@ -208,9 +196,6 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
                                             onChange={handleTitleChange}
                                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
                                         />
-                                        {errors.title && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                                        )}
                                     </div>
 
                                     {/* Slug */}
@@ -218,45 +203,28 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
                                         <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Slug
                                         </label>
-                                        <input
-                                            type="text"
-                                            id="slug"
-                                            value={data.slug}
-                                            onChange={handleSlugChange}
-                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
-                                        />
-                                        {errors.slug && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Editor Type Selection */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Editor Type
-                                        </label>
-                                        <div className="flex space-x-4">
-                                            <label className="inline-flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    value="classic"
-                                                    checked={data.editor_type === 'classic'}
-                                                    onChange={() => handleEditorTypeChange('classic')}
-                                                    className="form-radio"
-                                                />
-                                                <span className="ml-2">Classic Editor</span>
-                                            </label>
-                                            <label className="inline-flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    value="pagebuilder"
-                                                    checked={data.editor_type === 'pagebuilder'}
-                                                    onChange={() => handleEditorTypeChange('pagebuilder')}
-                                                    className="form-radio"
-                                                />
-                                                <span className="ml-2">Page Builder</span>
-                                            </label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                id="slug"
+                                                value={data.slug}
+                                                onChange={handleSlugChange}
+                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="text-xs px-2 py-1 border rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                                                onClick={() => { setData('slug', slugify(data.title)); setIsSlugEdited(false); }}
+                                                title="Reset slug sesuai judul"
+                                            >
+                                                Reset Slug
+                                            </button>
                                         </div>
+                                        {errors.slug && (
+                                            <div className="text-red-600 text-xs mt-1">
+                                                {Array.isArray(errors.slug) ? errors.slug[0] : errors.slug}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Content Editor */}
@@ -295,58 +263,20 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
                                         ) : (
                                             <div id="gjs" style={{ height: '700px', border: '2px solid #ccc' }}></div>
                                         )}
-                                        {errors.content && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.content}</p>
-                                        )}
                                     </div>
 
                                     {/* Meta Fields */}
                                     <MetaFields
-                                        metaDescription={data.meta_description || ''}
-                                        metaKeywords={data.meta_keywords || ''}
-                                        title={data.title || ''}
-                                        featuredImage={null}
+                                        title={data.title}
+                                        metaDescription={data.meta_description}
+                                        metaKeywords={data.meta_keywords}
+                                        featuredImage={data.featured_image}
                                         onMetaDescriptionChange={(value) => setData('meta_description', value)}
                                         onMetaKeywordsChange={(value) => setData('meta_keywords', value)}
-                                        onFeaturedImageChange={(file) => {
-                                            if (file instanceof File) {
-                                                setData('featured_image', file);
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setFeaturedImagePreview(reader.result as string);
-                                                };
-                                                reader.readAsDataURL(file);
-                                            } else {
-                                                setData('featured_image', null);
-                                                setFeaturedImagePreview('');
-                                            }
-                                        }}
-                                        featuredImagePreview={featuredImagePreview}
+                                        onFeaturedImageChange={handleFeaturedImageChange}
+                                        featuredImagePreview={data.featured_image?.url || ''}
                                         errors={errors}
                                     />
-
-                                    {/* Featured Image */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            Featured Image
-                                        </label>
-                                        <input
-                                            type="file"
-                                            onChange={handleFeaturedImageChange}
-                                            accept="image/*"
-                                            className="mt-1 block w-full"
-                                        />
-                                        {featuredImagePreview && (
-                                            <img
-                                                src={featuredImagePreview}
-                                                alt="Preview"
-                                                className="mt-2 h-32 w-auto object-cover"
-                                            />
-                                        )}
-                                        {errors.featured_image && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.featured_image}</p>
-                                        )}
-                                    </div>
 
                                     {/* Status */}
                                     <div>
@@ -367,8 +297,8 @@ const PagesEdit: React.FC<Props> = ({ page }) => {
                                     <div className="flex justify-end mt-6">
                                         <Button
                                             type="submit"
-                                            disabled={processing}
                                             className="ml-3"
+                                            disabled={processing}
                                         >
                                             {processing ? 'Saving...' : 'Save Changes'}
                                         </Button>

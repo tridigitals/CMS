@@ -7,6 +7,23 @@ import { Card } from '@/components/ui/card';
 import { ImagePlus, CheckCircle2, AlertCircle, Circle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+interface MediaItem {
+  id: number;
+  url: string;
+  name: string;
+  created_at: string;
+  thumb_url?: string;
+  mime_type?: string;
+}
+
+interface MediaLibraryResponse {
+  data: MediaItem[];
+  current_page: number;
+  last_page: number;
+  total: number;
+}
 
 interface MetaFieldsProps {
   title?: string;
@@ -30,20 +47,6 @@ interface SEOScore {
   suggestions: string[];
 }
 
-interface MediaLibraryResponse {
-  data: {
-    id: number;
-    url: string;
-    name: string;
-    created_at: string;
-    thumb_url?: string;
-    mime_type?: string;
-  }[];
-  current_page: number;
-  last_page: number;
-  total: number;
-}
-
 const OPTIMAL_META_DESCRIPTION_LENGTH = 155;
 const MAX_META_DESCRIPTION_LENGTH = 160;
 
@@ -56,7 +59,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
   onMetaKeywordsChange,
   onFeaturedImageChange,
   featuredImagePreview,
-  errors
+  errors,
 }) => {
   const [seoScore, setSeoScore] = useState<SEOScore>({
     score: 0,
@@ -65,14 +68,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
   });
 
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
-  const [mediaList, setMediaList] = useState<{
-    id: number;
-    url: string;
-    name: string;
-    created_at: string;
-    thumb_url?: string;
-    mime_type?: string;
-  }[]>([]);
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -81,44 +77,66 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
-      await fetchMedia(1, query);
+      await fetchMedia(1, query, false);
     }, 300),
     []
   );
 
-  const fetchMedia = async (page: number, search: string = '') => {
+  const fetchMedia = async (page: number, search: string = '', append: boolean = false) => {
     setIsLoading(true);
     try {
       const res = await fetch(
-        route('media.library', { page, search, type: 'image' }),
+        route('media.meta-fields', { page, search }),
         { headers: { 'Accept': 'application/json' } }
       );
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch media');
+      }
+
       const data: MediaLibraryResponse = await res.json();
-      setMediaList(data.data);
+      
+      // Only append if explicitly requested (infinite scroll)
+      if (append && page > 1) {
+        setMediaList(prev => [...prev, ...(data.data || [])]);
+      } else {
+        setMediaList(data.data || []);
+      }
+      
       setCurrentPage(data.current_page);
       setLastPage(data.last_page);
       setTotalItems(data.total);
     } catch (error) {
       console.error('Error fetching media:', error);
+      setMediaList([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (mediaModalOpen) {
+      setMediaList([]);
+      setCurrentPage(1);
+      setLastPage(1);
+      setTotalItems(0);
+      fetchMedia(1, searchQuery, false);
+    }
+  }, [mediaModalOpen]);
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
-    // First, upload to media library
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
       if (!csrfToken) {
         throw new Error('CSRF token not found');
       }
-  
+
       const res = await fetch(route('media.upload'), {
         method: 'POST',
         headers: {
@@ -127,12 +145,13 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
         body: formData,
         credentials: 'include'
       });
-  
+
       if (!res.ok) {
         throw new Error('Failed to upload file');
       }
-  
+
       const media = await res.json();
+
       // Update media library list
       setMediaList(prev => [media, ...prev]);
       // Set the file as featured image (pakai url langsung, tidak fetch ulang)
@@ -347,7 +366,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                 onClick={async () => {
                   setMediaModalOpen(true);
                   if (mediaList.length === 0) {
-                    fetchMedia(1, searchQuery);
+                    fetchMedia(1, searchQuery, false);
                   }
                 }}
               >
@@ -387,7 +406,6 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
         </TabsContent>
       </Tabs>
 
-      {/* Modal Media Library */}
       {mediaModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full h-[80vh] shadow-lg relative flex flex-col">
@@ -437,7 +455,7 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                   currentPage < lastPage &&
                   !isLoading
                 ) {
-                  fetchMedia(currentPage + 1, searchQuery);
+                  fetchMedia(currentPage + 1, searchQuery, true); // Set append to true for infinite scroll
                 }
               }}
             >
@@ -477,27 +495,30 @@ const MetaFields: React.FC<MetaFieldsProps> = ({
                 </div>
               )}
             </div>
-            {/* Pagination controls */}
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                disabled={currentPage === 1 || isLoading}
-                onClick={() => {
-                  if (currentPage > 1) fetchMedia(currentPage - 1, searchQuery);
-                }}
-                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-              >
-                &laquo; Sebelumnya
-              </button>
-              <span className="px-2 py-1">{currentPage} / {lastPage}</span>
-              <button
-                disabled={currentPage === lastPage || isLoading}
-                onClick={() => {
-                  if (currentPage < lastPage) fetchMedia(currentPage + 1, searchQuery);
-                }}
-                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-              >
-                Berikutnya &raquo;
-              </button>
+
+            <div>
+              {/* Pagination controls */}
+              <div className="flex justify-center gap-2 mt-4">
+                <button
+                  disabled={currentPage === 1 || isLoading}
+                  onClick={() => {
+                    if (currentPage > 1) fetchMedia(currentPage - 1, searchQuery, false);
+                  }}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  &laquo; Sebelumnya
+                </button>
+                <span className="px-2 py-1">{currentPage} / {lastPage}</span>
+                <button
+                  disabled={currentPage === lastPage || isLoading}
+                  onClick={() => {
+                    if (currentPage < lastPage) fetchMedia(currentPage + 1, searchQuery, false);
+                  }}
+                  className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+                >
+                  Berikutnya &raquo;
+                </button>
+              </div>
             </div>
           </div>
         </div>
