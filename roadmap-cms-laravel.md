@@ -118,7 +118,7 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     Implement a sitemap generator.
     Implement structured data markup (Schema.org) for better search engine understanding.
     Implement Open Graph meta tags for social media sharing.
-- Hari 5: CRUD Page (model, migration, controller, React form)
+- [x] Hari 5: CRUD Page (model, migration, controller, React form)
   - Buat model, migration, dan controller untuk pages.
   - Buat form CRUD Page di React.
   - **Dual Editor System:**
@@ -136,13 +136,43 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     - Simpan hasil body builder (HTML) ke database
     - Saat render page, gabungkan header/footer dari template dengan konten
     - Custom blocks dan komponen untuk GrapesJS
-- [x]Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
+- [x] Hari 6: CRUD Media (Enhanced with Spatie MediaLibrary and React Dropzone)
   - Automated Media Optimization: Implement image processing (e.g., using Spatie Image) to automatically compress, resize, and optimize media uploads for better performance.
   - Advanced Metadata and Tagging: Add custom metadata fields (e.g., alt text, captions) and integrate with existing tagging system for improved accessibility and searchability.
   - Frontend UX Improvements: Upgrade React Dropzone with features like multi-file uploads, progress bars, and previews using modern React components.
   - Security Enhancements: Add file validation, sanitization, and signed URLs to prevent malicious uploads and enhance security.
   - Seamless Integration and Extensibility: Make media CRUD modular with hooks for plugins, allowing custom media types and behaviors for future extensibility.
+  
 - Hari 7: CRUD Menu & Menu Item, integrasi ke layout
+  - **Database Structure:**
+    - Tabel `menus`: id, name, slug, description, location, timestamps
+    - Tabel `menu_items`: id, menu_id, parent_id, title, url, type, order, target, icon, timestamps
+  - **Model & Relationship:**
+    - Menu hasMany MenuItem
+    - MenuItem belongsTo Menu
+    - MenuItem self-referencing (parent_id) untuk nested menu
+  - **Migration:**
+    - Buat migration untuk `menus` dan `menu_items` dengan relasi dan index yang tepat
+  - **Controller & CRUD Logic:**
+    - MenuController: CRUD Menu (list, create, edit, delete)
+    - MenuItemController: CRUD Menu Item (add, edit, delete, reorder, support nested)
+    - Validasi loop parent-child dan url
+  - **Frontend (React/TypeScript):**
+    - Halaman Manajemen Menu: List, tambah/edit/hapus menu
+    - Menu Item Builder: drag-and-drop, form tambah/edit item, autocomplete link Page/Post/Category
+    - Visualisasi tree view, inline edit & reorder, konfirmasi hapus
+  - **Integrasi ke Layout:**
+    - Helper backend untuk nested menu
+    - Render menu di layout (main, footer, dsb)
+    - Support update dinamis dan cache
+  - **API/Route:**
+    - RESTful API CRUD Menu & Menu Item
+    - Route frontend untuk get menu by location/slug
+  - **Testing:**
+    - Unit test model, migration, controller
+    - Integration test drag-and-drop dan parent-child
+  - **Saran & Best Practice:**
+    - Support nested menu, flexible type, reorder & nesting, location-based rendering, cache output, extensible, SEO friendly
 
 **Minggu 2**
 - Hari 8: UI dasar (RadixUI, shadcn/ui), layout, theme switcher

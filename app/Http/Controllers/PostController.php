@@ -132,6 +132,7 @@ class PostController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:posts,slug',
             'content' => 'required|string',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'integer|exists:categories,id',
@@ -144,7 +145,7 @@ class PostController extends Controller
 
         $post = Post::create([
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $request->slug,
             'content' => $request->content,
             'meta_description' => $request->meta_description,
             'meta_keywords' => $request->meta_keywords,
@@ -154,7 +155,12 @@ class PostController extends Controller
         ]);
 
         // Handle featured image upload atau dari media library
-        if ($request->hasFile('featured_image')) {
+        if ($request->has('remove_featured_image') && $request->boolean('remove_featured_image')) {
+            // Remove featured image from post
+            $post->featured_image_id = null;
+            $post->clearMediaCollection('featured_image');
+            $post->save();
+        } elseif ($request->hasFile('featured_image')) {
             // Upload file ke media library
             $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
             $post->featured_image_id = $media->id;
@@ -274,6 +280,7 @@ class PostController extends Controller
         // normal fields if a file is present. We validate the file separately if needed.
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:posts,slug,' . $post->id,
             'content' => 'required|string',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'integer|exists:categories,id',
@@ -286,7 +293,7 @@ class PostController extends Controller
         // Update post with validated data (excluding the file for now)
         $post->update([
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $request->slug,
             'content' => $request->content,
             'meta_description' => $request->meta_description,
             'meta_keywords' => $request->meta_keywords,
@@ -296,7 +303,12 @@ class PostController extends Controller
         ]);
 
         // Handle featured image upload atau dari media library
-        if ($request->hasFile('featured_image')) {
+        if ($request->has('remove_featured_image') && $request->boolean('remove_featured_image')) {
+            // Remove featured image from post
+            $post->featured_image_id = null;
+            $post->clearMediaCollection('featured_image');
+            $post->save();
+        } elseif ($request->hasFile('featured_image')) {
             // Upload file ke media library
             $media = $post->addMediaFromRequest('featured_image')->toMediaCollection('featured_image');
             $post->featured_image_id = $media->id;
