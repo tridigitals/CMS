@@ -117,6 +117,8 @@ const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: ini
 
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>("");
 
+  const [formErrors, setFormErrors] = useState<any>({});
+
   const handleEditorChange = (content: string) => {
     setData("content", content);
   };
@@ -156,9 +158,12 @@ const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: ini
     if (data.featured_image) {
       formData.append('featured_image', data.featured_image);
     }
-    // Use router.post for FormData, even for create
+    setFormErrors({}); // reset error sebelum submit
     router.post("/posts", formData, {
       forceFormData: true,
+      onError: (errors) => {
+        setFormErrors(errors);
+      },
     });
   };
 
@@ -252,18 +257,29 @@ const PostsCreate: React.FC<Props> = ({ categories: initialCategories, tags: ini
             </div>
             <div>
               <label className="block text-base font-semibold text-gray-700 mb-1">Slug</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out hover:border-indigo-300 bg-white"
-                value={data.slug}
-                onChange={handleSlugChange}
-                placeholder="Auto-generated from title"
-                required
-              />
-              {errors.slug && <div className="text-red-500 text-sm mt-1 animate-shake">{errors.slug}</div>}
-              <div className="text-xs text-gray-400 mt-1 transition-opacity duration-200 hover:text-gray-600">
-                Slug otomatis dari judul, tapi bisa diubah manual.
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out hover:border-indigo-300 bg-white"
+                  value={data.slug}
+                  onChange={handleSlugChange}
+                  placeholder="Auto-generated from title"
+                  required
+                />
+                <button
+                  type="button"
+                  className="text-xs px-2 py-1 border rounded bg-gray-100 hover:bg-gray-200"
+                  onClick={() => { setData('slug', slugify(data.title)); setIsSlugEdited(false); }}
+                  title="Reset slug sesuai judul"
+                >
+                  Reset Slug
+                </button>
               </div>
+              {(formErrors.slug || errors.slug) && (
+                <div className="text-red-500 text-sm mt-1 animate-shake">
+                  {formErrors.slug || errors.slug}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-base font-semibold text-gray-700 mb-1">Content</label>
