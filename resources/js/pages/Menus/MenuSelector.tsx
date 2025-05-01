@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
 interface Menu {
@@ -41,6 +41,15 @@ const MenuSelector = ({ menus, currentMenuId, onChange }: Props) => {
           </SelectContent>
         </Select>
       </div>
+
+      {currentMenuId && (
+        <Button asChild variant="outline">
+          <Link href={`/menus/${currentMenuId}/edit`}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Menu
+          </Link>
+        </Button>
+      )}
 
       <Button asChild variant="outline">
         <Link href="/menus/create">

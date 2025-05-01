@@ -8,15 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('menus', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('location')->unique();
-            $table->timestamps();
-        });
+    Schema::create('menus', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('location')->unique();
+        $table->string('description')->nullable();
+        $table->timestamps();
+    });
 
-        Schema::create('menu_items', function (Blueprint $table) {
-            $table->id();
+    Schema::create('menu_items', function (Blueprint $table) {
+        $table->id();
             $table->foreignId('menu_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('url');

@@ -1,7 +1,5 @@
-import React from 'react';
-import { Head } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
-import { useForm } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { Head, useForm as useInertiaForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,34 +25,60 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { BreadcrumbItem } from '@/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  location: z.string().optional(),
-  description: z.string().optional(),
+  location: z.string().min(1, 'Location is required'),
+  description: z.string().optional().nullable(),
 });
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Menus', href: '/menus' },
-  { title: 'Create Menu', href: '/menus/create' },
-];
+interface Props {
+  menu: {
+    id: number;
+    name: string;
+    location: string;
+    description?: string | null;
+  };
+  menus: {
+    id: number;
+    name: string;
+  }[];
+}
 
-const Create = () => {
+const Edit = ({ menu, menus }: Props) => {
+  const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Menus', href: '/menus' },
+    { title: 'Edit Menu', href: `/menus/${menu.id}/edit` },
+  ];
+
+  // Use Inertia form for submission
+  const inertiaForm = useInertiaForm({
+    name: menu.name,
+    location: menu.location,
+    description: menu.description || '',
+  });
+
+  // Use React Hook Form for validation
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      location: '',
-      description: '',
+      name: menu.name,
+      location: menu.location,
+      description: menu.description || '',
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    router.post('/menus', values, {
+    inertiaForm.data.name = values.name;
+    inertiaForm.data.location = values.location;
+    inertiaForm.data.description = values.description || '';
+    
+    inertiaForm.put(`/menus/${menu.id}`, {
       onError: (errors) => {
         // Form errors will be handled by the form validation
       },
@@ -66,13 +90,13 @@ const Create = () => {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Create Menu" />
+      <Head title={`Edit Menu: ${menu.name}`} />
 
       <div className="container mx-auto py-6">
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Create New Menu</CardTitle>
+              <CardTitle>Edit Menu</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -127,6 +151,7 @@ const Create = () => {
                           <Textarea
                             placeholder="Menu description"
                             {...field}
+                            value={field.value || ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -142,8 +167,8 @@ const Create = () => {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={form.formState.isSubmitting}>
-                      Create Menu
+                    <Button type="submit" disabled={inertiaForm.processing}>
+                      Update Menu
                     </Button>
                   </div>
                 </form>
@@ -156,4 +181,4 @@ const Create = () => {
   );
 };
 
-export default Create;
+export default Edit;

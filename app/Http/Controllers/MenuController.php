@@ -107,6 +107,7 @@ class MenuController extends Controller
                 'id' => $menu->id,
                 'name' => $menu->name,
                 'location' => $menu->location,
+                'description' => $menu->description,
                 'items' => $menu->items->map(function ($item) {
                     return [
                         'id' => $item->id,
@@ -126,6 +127,7 @@ class MenuController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
             'items' => 'array',
             'items.*.id' => 'nullable|integer',
             'items.*.title' => 'required|string|max:255',
@@ -147,6 +149,7 @@ class MenuController extends Controller
         $menu->update([
             'name' => $validated['name'],
             'location' => $validated['location'],
+            'description' => $validated['description'] ?? null,
         ]);
 
         if (isset($validated['items'])) {

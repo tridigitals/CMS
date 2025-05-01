@@ -3,10 +3,18 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { PageProps, BreadcrumbItem } from "@/types";
 import MenuSelector from "./MenuSelector";
-import MenuItemForm from "./MenuItemForm";
-import MenuTree, { MenuItem as MenuTreeItem } from "./MenuTree";
+import MenuTree from "./MenuTree";
 
-interface MenuItem extends MenuTreeItem {}
+interface MenuItem {
+  id: number;
+  title: string;
+  url: string;
+  type: 'page' | 'post' | 'category' | 'custom';
+  target?: string;
+  parent_id: number | null;
+  order: number;
+  children?: MenuItem[];
+}
 
 interface Menu {
   id: number;
@@ -46,25 +54,33 @@ const MenuBuilder: React.FC<Props> = ({ menu, menus }) => {
   };
 
   // Handler untuk tambah item
-  const handleAddItem = (data: { label: string; url: string }) => {
+  const handleAddItem = (data: { title: string; url: string; type: 'page' | 'post' | 'category' | 'custom'; target: '_self' | '_blank'; }) => {
     // TODO: API call ke backend, lalu update state
     const newItem: MenuItem = {
       id: Math.random(), // Sementara pakai random, nanti pakai dari backend
-      label: data.label,
+      title: data.title,
       url: data.url,
+      type: data.type,
+      target: data.target,
       parent_id: null,
       order: items.length,
     };
     setItems([...items, newItem]);
   };
 
-  // Handler edit/hapus item (dummy)
+  // Handler edit/hapus item
   const handleEditItem = (item: MenuItem) => {
-    // TODO: tampilkan modal/form edit
-    alert(`Edit item: ${item.label}`);
+    // Redirect to edit page
+    window.location.href = `/menus/${menu.id}/edit`;
   };
+  
   const handleDeleteItem = (id: number) => {
     setItems(items.filter(i => i.id !== id));
+  };
+
+  const handleItemMove = (draggedId: number, hoverId: number | null, position: 'before' | 'after' | 'inside') => {
+    // Handle item move logic here
+    console.log('Item moved:', draggedId, hoverId, position);
   };
 
   const tree = getTree(items);
@@ -76,11 +92,74 @@ const MenuBuilder: React.FC<Props> = ({ menu, menus }) => {
         <MenuSelector menus={menus} currentMenuId={currentMenuId} onChange={handleMenuChange} />
         <div className="flex gap-8">
           <div className="w-1/3">
-            <MenuItemForm onSubmit={handleAddItem} />
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-medium mb-4">Add Menu Item</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    className="w-full border rounded p-2" 
+                    placeholder="Menu item title"
+                    id="custom-title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">URL</label>
+                  <input 
+                    type="text" 
+                    className="w-full border rounded p-2" 
+                    placeholder="https://example.com"
+                    id="custom-url"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Target</label>
+                  <select 
+                    className="w-full border rounded p-2"
+                    id="custom-target"
+                    defaultValue="_self"
+                  >
+                    <option value="_self">Same Window</option>
+                    <option value="_blank">New Window</option>
+                  </select>
+                </div>
+                <button 
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded"
+                  onClick={() => {
+                    const titleElement = document.getElementById('custom-title') as HTMLInputElement;
+                    const urlElement = document.getElementById('custom-url') as HTMLInputElement;
+                    const targetElement = document.getElementById('custom-target') as HTMLSelectElement;
+                    
+                    if (titleElement?.value && urlElement?.value) {
+                      handleAddItem({
+                        title: titleElement.value,
+                        url: urlElement.value,
+                        type: 'custom',
+                        target: targetElement.value as '_self' | '_blank'
+                      });
+                      
+                      // Clear inputs after adding
+                      titleElement.value = '';
+                      urlElement.value = '';
+                    } else {
+                      alert('Please enter both title and URL for the custom link');
+                    }
+                  }}
+                >
+                  Add Item
+                </button>
+              </div>
+            </div>
           </div>
           <div className="w-2/3">
             <h3 className="font-medium mb-2">Menu Structure</h3>
-            <MenuTree items={tree} onEdit={handleEditItem} onDelete={handleDeleteItem} />
+            <MenuTree 
+              items={tree} 
+              onEdit={handleEditItem} 
+              onDelete={handleDeleteItem}
+              onMove={handleItemMove}
+            />
             <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">Save menu</button>
           </div>
         </div>
