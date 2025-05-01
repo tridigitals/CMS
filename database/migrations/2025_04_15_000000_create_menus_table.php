@@ -22,6 +22,11 @@ return new class extends Migration
             $table->string('title');
             $table->string('url');
             $table->string('type');
+            $table->string('icon')->nullable();
+            $table->string('css_class')->nullable();
+            $table->string('text_color')->nullable();
+            $table->string('bg_color')->nullable();
+            $table->boolean('highlight')->default(false);
             $table->foreignId('parent_id')->nullable()->constrained('menu_items')->onDelete('cascade');
             $table->integer('order')->default(0);
             $table->string('target')->default('_self');

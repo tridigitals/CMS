@@ -1,29 +1,29 @@
 // File ini di-GENERATE OTOMATIS oleh script generate-menu.js
 // Edit manual tidak disarankan.
 
-import { LayoutGrid, Users, Shield, Settings, User, Tag } from 'lucide-react';
+import { Home, Users, Shield, Settings, User, Tag, Folder, FileText, BookOpen, Briefcase, Pencil, List } from 'lucide-react';
 import { NavItem } from './types';
 
 export const mainNavItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: LayoutGrid,
+    icon: Home,
   },
   {
     title: 'Post Management',
-    icon: LayoutGrid,
+    icon: Briefcase,
     children: [
       {
         title: 'Posts',
         href: '/posts',
-        icon: LayoutGrid,
+        icon: FileText,
         permission: 'manage posts',
       },
       {
         title: 'Categories',
         href: '/categories',
-        icon: LayoutGrid,
+        icon: Folder,
         permission: 'manage posts',
       },
       {
@@ -35,26 +35,38 @@ export const mainNavItems: NavItem[] = [
       {
         title: 'Comments',
         href: '/comments',
-        icon: LayoutGrid,
+        icon: List,
         permission: 'manage posts',
       },
       {
         title: 'Media',
         href: '/media',
-        icon: LayoutGrid,
+        icon: BookOpen,
         permission: 'manage media',
       },
     ],
   },
   {
     title: 'Pages Management',
-    icon: LayoutGrid,
+    icon: Pencil,
     children: [
       {
         title: 'Pages',
         href: '/pages',
-        icon: LayoutGrid,
+        icon: FileText,
         permission: 'manage pages',
+      },
+    ],
+  },
+  {
+    title: 'Appearance',
+    icon: Briefcase,
+    children: [
+      {
+        title: 'Menus',
+        href: '/menus',
+        icon: Folder,
+        permission: 'manage menus',
       },
     ],
   },

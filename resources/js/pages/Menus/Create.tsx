@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head } from '@inertiajs/react';
+import React, { useEffect } from 'react';
+import { Head, usePage } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import { useForm } from 'react-hook-form';
 import AppLayout from '@/layouts/app-layout';
@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { BreadcrumbItem } from '@/types';
+import Swal from 'sweetalert2';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -56,7 +57,32 @@ const Create = () => {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     router.post('/menus', values, {
       onError: (errors) => {
-        // Form errors will be handled by the form validation
+        // Extract error message
+        let errorMessage = '';
+        
+        if (errors.location) {
+          errorMessage = typeof errors.location === 'string' 
+            ? errors.location 
+            : Array.isArray(errors.location) 
+              ? errors.location[0] 
+              : 'A menu with this location already exists. Please choose a different location.';
+        } else if (errors.general) {
+          errorMessage = typeof errors.general === 'string' 
+            ? errors.general 
+            : Array.isArray(errors.general) 
+              ? errors.general[0] 
+              : 'An error occurred while creating the menu.';
+        } else {
+          errorMessage = Object.values(errors).flat().join('\n');
+        }
+        
+        // Show SweetAlert with error message
+        Swal.fire({
+          title: 'Error!',
+          text: errorMessage,
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
       },
       onSuccess: () => {
         // Redirect will be handled by the controller

@@ -13,9 +13,18 @@ class MenuItem extends Model
         'title',
         'url',
         'type',
+        'icon',
         'parent_id',
         'order',
         'target',
+        'css_class',
+        'text_color',
+        'bg_color',
+        'highlight',
+    ];
+
+    protected $casts = [
+        'highlight' => 'boolean',
     ];
 
     public function menu(): BelongsTo

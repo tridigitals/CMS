@@ -28,7 +28,12 @@ interface MenuItem {
   title: string;
   url: string;
   type: 'page' | 'post' | 'category' | 'custom';
+  icon?: string;
   target?: string;
+  css_class?: string;
+  text_color?: string;
+  bg_color?: string;
+  highlight?: boolean;
   order?: number;
   children?: MenuItem[];
 }
@@ -38,6 +43,12 @@ interface MenuSource {
   title: string;
   url: string;
   type: string;
+  icon?: string;
+  target?: string;
+  css_class?: string;
+  text_color?: string;
+  bg_color?: string;
+  highlight?: boolean;
 }
 
 interface MenuSources {
@@ -56,6 +67,11 @@ interface EditFormData {
   url: string;
   type: 'page' | 'post' | 'category' | 'custom';
   target: '_self' | '_blank';
+  icon: string;
+  css_class: string;
+  text_color: string;
+  bg_color: string;
+  highlight: boolean;
 }
 
 const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
@@ -72,7 +88,12 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
     title: '',
     url: '',
     type: 'custom',
-    target: '_self'
+    target: '_self',
+    icon: '',
+    css_class: '',
+    text_color: '',
+    bg_color: '',
+    highlight: false
   });
   
   // Search states
@@ -128,12 +149,17 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
 
   const handleAddItems = (items: MenuSource[]) => {
     const timestamp = Date.now(); // Used to generate unique temporary IDs
-    const newItems: MenuItem[] = items.map((item, index) => ({
+    const newItems: MenuItem[] = items.map((item: any, index) => ({
       id: -(timestamp + index), // Negative IDs for new items to avoid conflicts
       title: item.title,
       url: item.url,
       type: item.type as 'page' | 'post' | 'category' | 'custom',
-      target: '_self',
+      target: item.target || '_self',
+      icon: item.icon || '',
+      css_class: item.css_class || '',
+      text_color: item.text_color || '',
+      bg_color: item.bg_color || '',
+      highlight: item.highlight || false,
       order: 0
     }));
 
@@ -183,7 +209,12 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
       title: item.title,
       url: item.url,
       type: item.type,
-      target: item.target || '_self'
+      target: item.target || '_self',
+      icon: item.icon || '',
+      css_class: item.css_class || '',
+      text_color: item.text_color || '',
+      bg_color: item.bg_color || '',
+      highlight: item.highlight || false
     });
     setIsEditDialogOpen(true);
   };
@@ -201,13 +232,19 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
               title: editFormData.title,
               url: editFormData.url,
               type: editFormData.type,
-              target: editFormData.target
+              target: editFormData.target,
+              icon: editFormData.icon,
+              css_class: editFormData.css_class,
+              text_color: editFormData.text_color,
+              bg_color: editFormData.bg_color,
+              highlight: editFormData.highlight
             };
             return true;
           }
           if (items[i].children) {
             const childrenArray = items[i].children || [];
             if (updateItem(childrenArray)) {
+              items[i].children = childrenArray; // Update children array
               return true;
             }
           }
@@ -289,18 +326,36 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
     }
     
     const processItems = (items: MenuItem[], order = 0, parentId: number | null = null): any[] => {
-      return items.map((item, index) => ({
-        id: item.id > 0 ? item.id : undefined,
-        title: item.title,
-        url: item.url,
-        type: item.type,
-        target: item.target || '_self',
-        order: order + index,
-        parent_id: parentId,
-        ...(item.children && item.children.length > 0
-          ? { children: processItems(item.children, 0, item.id > 0 ? item.id : undefined) }
-          : {})
-      }));
+      return items.map((item, index) => {
+        // Create a clean object with only the necessary properties
+        const processedItem: any = {
+          id: item.id > 0 ? item.id : undefined,
+          title: item.title,
+          url: item.url,
+          type: item.type,
+          target: item.target || '_self',
+          order: order + index,
+          parent_id: parentId
+        };
+        
+        // Only add styling properties if they have values
+        if (item.icon) processedItem.icon = item.icon;
+        if (item.css_class) processedItem.css_class = item.css_class;
+        if (item.text_color) processedItem.text_color = item.text_color;
+        if (item.bg_color) processedItem.bg_color = item.bg_color;
+        if (item.highlight !== undefined) processedItem.highlight = item.highlight;
+        
+        // Add children if they exist
+        if (item.children && item.children.length > 0) {
+          processedItem.children = processItems(
+            item.children, 
+            0, 
+            item.id > 0 ? item.id : undefined
+          );
+        }
+        
+        return processedItem;
+      });
     };
 
     // Show loading state
@@ -348,13 +403,30 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
       });
     })
     .catch(error => {
+      console.error(error);
+      
+      // Extract error message from response if available
+      let errorMessage = 'Failed to save menu items';
+      
+      if (error.response && error.response.data) {
+        if (error.response.data.error && typeof error.response.data.error === 'string') {
+          errorMessage = error.response.data.error;
+        } else if (error.response.data.message && typeof error.response.data.message === 'string') {
+          errorMessage = error.response.data.message;
+        }
+        
+        // Handle specific error types
+        if (errorMessage.includes('Duplicate entry') && errorMessage.includes('menus_location_unique')) {
+          errorMessage = 'A menu with this location already exists. Please choose a different location.';
+        }
+      }
+      
       Swal.fire({
         title: 'Error!',
-        text: 'Failed to save menu items',
+        text: errorMessage,
         icon: 'error',
         confirmButtonText: 'OK'
       });
-      console.error(error);
     });
   };
 
@@ -552,12 +624,66 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                         </SelectContent>
                       </Select>
                     </div>
+                    
+                    {/* Styling Options */}
+                    <div className="border-t pt-4 mt-4">
+                      <h3 className="font-medium text-gray-700 mb-3">Styling Options</h3>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="custom-icon">Icon</Label>
+                        <Input 
+                          id="custom-icon" 
+                          placeholder="fa-home or other icon class" 
+                        />
+                        <p className="text-xs text-gray-500">Enter a Font Awesome or other icon class</p>
+                      </div>
+                      
+                      <div className="grid gap-2 mt-3">
+                        <Label htmlFor="custom-css-class">CSS Class</Label>
+                        <Input 
+                          id="custom-css-class" 
+                          placeholder="Custom CSS class" 
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div className="grid gap-2">
+                          <Label htmlFor="custom-text-color">Text Color</Label>
+                          <Input 
+                            id="custom-text-color" 
+                            placeholder="#000000 or color name" 
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="custom-bg-color">Background Color</Label>
+                          <Input 
+                            id="custom-bg-color" 
+                            placeholder="#ffffff or color name" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center mt-3">
+                        <input
+                          type="checkbox"
+                          id="custom-highlight"
+                          className="mr-2"
+                        />
+                        <Label htmlFor="custom-highlight">Highlight this menu item</Label>
+                      </div>
+                    </div>
+                    
                     <Button
                       className="w-full mt-4"
                       onClick={() => {
                         const titleElement = document.getElementById('custom-title') as HTMLInputElement;
                         const urlElement = document.getElementById('custom-url') as HTMLInputElement;
                         const targetElement = document.querySelector('[id="custom-target"] [data-value]') as HTMLElement;
+                        const iconElement = document.getElementById('custom-icon') as HTMLInputElement;
+                        const cssClassElement = document.getElementById('custom-css-class') as HTMLInputElement;
+                        const textColorElement = document.getElementById('custom-text-color') as HTMLInputElement;
+                        const bgColorElement = document.getElementById('custom-bg-color') as HTMLInputElement;
+                        const highlightElement = document.getElementById('custom-highlight') as HTMLInputElement;
                         
                         if (titleElement?.value && urlElement?.value) {
                           const customItem: MenuSource = {
@@ -567,11 +693,27 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                             type: 'custom'
                           };
                           
-                          handleAddItems([customItem]);
+                          // Add styling properties to the item
+                          const customItemWithStyling: any = {
+                            ...customItem,
+                            target: targetElement?.getAttribute('data-value') || '_self',
+                            icon: iconElement?.value || '',
+                            css_class: cssClassElement?.value || '',
+                            text_color: textColorElement?.value || '',
+                            bg_color: bgColorElement?.value || '',
+                            highlight: highlightElement?.checked || false
+                          };
+                          
+                          handleAddItems([customItemWithStyling]);
                           
                           // Clear inputs after adding
                           titleElement.value = '';
                           urlElement.value = '';
+                          iconElement.value = '';
+                          cssClassElement.value = '';
+                          textColorElement.value = '';
+                          bgColorElement.value = '';
+                          highlightElement.checked = false;
                         } else {
                           Swal.fire({
                             title: 'Error!',
@@ -680,6 +822,65 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                   <SelectItem value="_blank">New window</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="icon" className="text-right">
+                Icon
+              </Label>
+              <Input
+                id="icon"
+                value={editFormData.icon}
+                onChange={(e) => setEditFormData({...editFormData, icon: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="css_class" className="text-right">
+                CSS Class
+              </Label>
+              <Input
+                id="css_class"
+                value={editFormData.css_class}
+                onChange={(e) => setEditFormData({...editFormData, css_class: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="text_color" className="text-right">
+                Text Color
+              </Label>
+              <Input
+                id="text_color"
+                value={editFormData.text_color}
+                onChange={(e) => setEditFormData({...editFormData, text_color: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="bg_color" className="text-right">
+                Background Color
+              </Label>
+              <Input
+                id="bg_color"
+                value={editFormData.bg_color}
+                onChange={(e) => setEditFormData({...editFormData, bg_color: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="highlight" className="text-right">
+                Highlight
+              </Label>
+              <div className="col-span-3">
+                <input
+                  type="checkbox"
+                  id="highlight"
+                  checked={editFormData.highlight}
+                  onChange={(e) => setEditFormData({...editFormData, highlight: e.target.checked})}
+                  className="mr-2"
+                />
+                <label htmlFor="highlight">Highlight this menu item</label>
+              </div>
             </div>
           </div>
           <DialogFooter>

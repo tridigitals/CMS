@@ -30,6 +30,7 @@ class RolePermissionSeeder extends Seeder
             'manage permissions',
             'manage posts',
             'manage pages',
+            'manage menus',
             'manage media',
             'manage settings',
             'manage plugins',

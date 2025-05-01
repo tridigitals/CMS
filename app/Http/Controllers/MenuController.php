@@ -88,15 +88,40 @@ class MenuController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'location' => 'required|string|max:255',
+                'description' => 'nullable|string|max:1000',
+            ]);
 
-        $menu = Menu::create($validated);
+            // Check if a menu with this location already exists
+            $existingMenu = Menu::where('location', $validated['location'])->first();
+            if ($existingMenu) {
+                return redirect()->back()->with('error', 'A menu with this location already exists. Please choose a different location.');
+            }
 
-        return redirect()->route('menus.edit', $menu)->with('success', 'Menu created successfully.');
+            $menu = Menu::create($validated);
+
+            return redirect()->route('menus.index')->with('success', 'Menu created successfully.');
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Menu creation error: ' . $e->getMessage());
+            
+            // For AJAX requests, return JSON error
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => [
+                        'general' => ['An error occurred while creating the menu. Please try again.']
+                    ]
+                ], 500);
+            }
+            
+            // For regular requests, redirect back with error
+            return redirect()->back()->withInput()->withErrors([
+                'general' => 'An error occurred while creating the menu. Please try again.'
+            ]);
+        }
     }
 
     public function edit(Menu $menu)
@@ -128,12 +153,17 @@ class MenuController extends Controller
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'items' => 'array',
+            'items' => 'array|nullable',
             'items.*.id' => 'nullable|integer',
             'items.*.title' => 'required|string|max:255',
             'items.*.url' => 'required|string|max:255',
             'items.*.type' => 'required|string|in:page,post,category,custom',
+            'items.*.icon' => 'nullable|string|max:255',
             'items.*.target' => 'nullable|string|in:_self,_blank',
+            'items.*.css_class' => 'nullable|string|max:255',
+            'items.*.text_color' => 'nullable|string|max:50',
+            'items.*.bg_color' => 'nullable|string|max:50',
+            'items.*.highlight' => 'nullable|boolean',
             'items.*.order' => 'nullable|integer',
             'items.*.parent_id' => 'nullable|integer',
             'items.*.children' => 'array|nullable',
@@ -141,7 +171,12 @@ class MenuController extends Controller
             'items.*.children.*.title' => 'required|string|max:255',
             'items.*.children.*.url' => 'required|string|max:255',
             'items.*.children.*.type' => 'required|string|in:page,post,category,custom',
+            'items.*.children.*.icon' => 'nullable|string|max:255',
             'items.*.children.*.target' => 'nullable|string|in:_self,_blank',
+            'items.*.children.*.css_class' => 'nullable|string|max:255',
+            'items.*.children.*.text_color' => 'nullable|string|max:50',
+            'items.*.children.*.bg_color' => 'nullable|string|max:50',
+            'items.*.children.*.highlight' => 'nullable|boolean',
             'items.*.children.*.order' => 'nullable|integer',
             'items.*.children.*.parent_id' => 'nullable|integer'
         ]);
@@ -178,9 +213,14 @@ class MenuController extends Controller
                 'title' => $item['title'],
                 'url' => $item['url'],
                 'type' => $item['type'],
+                'icon' => $item['icon'] ?? null,
                 'target' => $item['target'] ?? '_self',
                 'parent_id' => $parentId,
                 'order' => $item['order'] ?? $index,
+                'css_class' => $item['css_class'] ?? null,
+                'text_color' => $item['text_color'] ?? null,
+                'bg_color' => $item['bg_color'] ?? null,
+                'highlight' => $item['highlight'] ?? false,
             ]);
 
             if (!empty($item['children']) && is_array($item['children'])) {

@@ -69,45 +69,60 @@ class MenuItemController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'menu_id' => 'required|exists:menus,id',
-            'items' => 'required|array',
-            'items.*.title' => 'required|string|max:255',
-            'items.*.url' => 'required|string|max:255',
-            'items.*.type' => 'required|string|in:page,post,category,custom',
-            'items.*.target' => 'nullable|string|in:_self,_blank',
-            'items.*.order' => 'required|integer|min:0',
-            'items.*.parent_id' => 'nullable|integer',
-            'items.*.children' => 'nullable|array'
-        ]);
+        try {
+            $validated = $request->validate([
+                'menu_id' => 'required|exists:menus,id',
+                'items' => 'required|array',
+                'items.*.title' => 'required|string|max:255',
+                'items.*.url' => 'required|string|max:255',
+                'items.*.type' => 'required|string|in:page,post,category,custom',
+                'items.*.target' => 'nullable|string|in:_self,_blank',
+                'items.*.icon' => 'nullable|string|max:255',
+                'items.*.css_class' => 'nullable|string|max:255',
+                'items.*.text_color' => 'nullable|string|max:50',
+                'items.*.bg_color' => 'nullable|string|max:50',
+                'items.*.highlight' => 'nullable|boolean',
+                'items.*.order' => 'required|integer|min:0',
+                'items.*.parent_id' => 'nullable|integer',
+                'items.*.children' => 'nullable|array'
+            ]);
 
-        $menu = Menu::findOrFail($request->menu_id);
+            $menu = Menu::findOrFail($request->menu_id);
 
-        // Clear existing menu items
-        $menu->items()->delete();
+            // Clear existing menu items
+            $menu->items()->delete();
 
-        // Function to recursively create menu items
-        $createItems = function($items, $parentId = null) use (&$createItems, $menu) {
-            foreach ($items as $index => $item) {
-                $menuItem = $menu->items()->create([
-                    'title' => $item['title'],
-                    'url' => $item['url'],
-                    'type' => $item['type'],
-                    'target' => $item['target'] ?? '_self',
-                    'order' => $item['order'] ?? $index,
-                    'parent_id' => $parentId
-                ]);
+            // Function to recursively create menu items
+            $createItems = function($items, $parentId = null) use (&$createItems, $menu) {
+                foreach ($items as $index => $item) {
+                    $menuItem = $menu->items()->create([
+                        'title' => $item['title'],
+                        'url' => $item['url'],
+                        'type' => $item['type'],
+                        'target' => $item['target'] ?? '_self',
+                        'icon' => $item['icon'] ?? null,
+                        'css_class' => $item['css_class'] ?? null,
+                        'text_color' => $item['text_color'] ?? null,
+                        'bg_color' => $item['bg_color'] ?? null,
+                        'highlight' => isset($item['highlight']) ? (bool)$item['highlight'] : false,
+                        'order' => $item['order'] ?? $index,
+                        'parent_id' => $parentId
+                    ]);
 
-                if (!empty($item['children'])) {
-                    $createItems($item['children'], $menuItem->id);
+                    if (!empty($item['children'])) {
+                        $createItems($item['children'], $menuItem->id);
+                    }
                 }
-            }
-        };
+            };
 
-        // Create menu items
-        $createItems($validated['items']);
+            // Create menu items
+            $createItems($validated['items']);
 
-        return response()->json(['message' => 'Menu items saved successfully']);
+            return response()->json(['message' => 'Menu items saved successfully']);
+        } catch (\Exception $e) {
+            \Log::error('Menu item save error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function move(Request $request, MenuItem $menuItem)
