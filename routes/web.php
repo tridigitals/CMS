@@ -89,6 +89,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/users/bulk-change-role', [UserController::class, 'bulkChangeRole'])
         ->middleware('can:manage users')
         ->name('users.bulkChangeRole');
+
+    // Menu Management routes
+    Route::resource('menus', \App\Http\Controllers\MenuController::class)->middleware('can:manage menus');
+    Route::get('menu-sources', [\App\Http\Controllers\MenuItemController::class, 'getSources'])->middleware('can:manage menus');
+    Route::get('menus/{menu}/items', [\App\Http\Controllers\MenuItemController::class, 'getItems'])->middleware('can:manage menus');
+    Route::post('menu-items', [\App\Http\Controllers\MenuItemController::class, 'store'])->middleware('can:manage menus');
+    Route::post('menu-items/{menuItem}/move', [\App\Http\Controllers\MenuItemController::class, 'move'])->middleware('can:manage menus');
+    Route::delete('menu-items/{menuItem}', [\App\Http\Controllers\MenuItemController::class, 'destroy'])->middleware('can:manage menus');
 });
 
 require __DIR__.'/settings.php';
