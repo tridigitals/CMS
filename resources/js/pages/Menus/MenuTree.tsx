@@ -134,7 +134,7 @@ const MenuTreeContent: React.FC<MenuTreeProps> = ({ items, onMove, onDelete, onE
   return (
     <div className="space-y-4">
       {items.length > 0 && (
-        <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
           <div className="flex items-center gap-2">
             <div 
               className="cursor-pointer flex items-center gap-2" 
@@ -143,9 +143,9 @@ const MenuTreeContent: React.FC<MenuTreeProps> = ({ items, onMove, onDelete, onE
               {selectAll ? (
                 <CheckSquare className="h-5 w-5 text-blue-500" />
               ) : (
-                <Square className="h-5 w-5 text-gray-400" />
+                <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
               )}
-              <span>Select All</span>
+              <span className="dark:text-gray-300">Select All</span>
             </div>
           </div>
           
@@ -155,6 +155,7 @@ const MenuTreeContent: React.FC<MenuTreeProps> = ({ items, onMove, onDelete, onE
               size="sm" 
               onClick={handleBulkDelete}
               disabled={selectedItems.length === 0}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Delete Selected
             </Button>
@@ -163,6 +164,7 @@ const MenuTreeContent: React.FC<MenuTreeProps> = ({ items, onMove, onDelete, onE
               size="sm" 
               onClick={() => handleBulkHighlight(true)}
               disabled={selectedItems.length === 0}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Highlight Selected
             </Button>
@@ -171,22 +173,23 @@ const MenuTreeContent: React.FC<MenuTreeProps> = ({ items, onMove, onDelete, onE
               size="sm" 
               onClick={() => handleBulkHighlight(false)}
               disabled={selectedItems.length === 0}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Remove Highlight
             </Button>
           </div>
           
           {selectedItems.length > 0 && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {selectedItems.length} item(s) selected
             </div>
           )}
         </div>
       )}
       
-      <div ref={dropRef} className="min-h-[200px] p-4 border rounded-lg bg-white">
+      <div ref={dropRef} className="min-h-[200px] p-4 border rounded-lg bg-white dark:bg-gray-900 dark:border-gray-700">
         {items.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
             Drag items here to build your menu
           </div>
         ) : (
@@ -288,7 +291,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({
         opacity: isDragging ? 0.5 : 1,
         position: 'relative',
       }}
-      className={`mb-2 ${isOverCurrent ? 'bg-gray-100' : ''}`}
+      className={`mb-2 ${isOverCurrent ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
     >
       <Card className={`p-3 ${isOver ? 'ring-2 ring-primary' : ''} ${item.css_class || ''} ${isSelected ? 'ring-2 ring-blue-400' : ''}`} style={cardStyle}>
         <div className="flex items-center gap-2">
@@ -300,19 +303,19 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({
               {isSelected ? (
                 <CheckSquare className="h-5 w-5 text-blue-500" />
               ) : (
-                <Square className="h-5 w-5 text-gray-400" />
+                <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
               )}
             </div>
           )}
           <div ref={previewRef} className="cursor-move">
-            <GripVertical className="h-5 w-5 text-gray-400" />
+            <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
           </div>
           <div className="flex-grow">
             <div className="font-medium">
               {item.icon && <span className={`mr-2 ${item.icon}`}></span>}
               {item.title}
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {item.type} • {item.url}
             </div>
           </div>
@@ -321,7 +324,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onEdit(item)}
-              className="text-blue-500 hover:text-blue-700"
+              className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -329,7 +332,7 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onDelete(item.id)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

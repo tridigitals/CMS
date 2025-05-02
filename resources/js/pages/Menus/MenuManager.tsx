@@ -214,7 +214,7 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
       css_class: item.css_class || '',
       text_color: item.text_color || '',
       bg_color: item.bg_color || '',
-      highlight: item.highlight || false
+      highlight: item.highlight !== undefined ? item.highlight : false
     });
     setIsEditDialogOpen(true);
   };
@@ -436,7 +436,7 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
 
   return (
     <div className="p-4">
-      <Card className="p-6">
+      <Card className="p-6 dark:bg-gray-900 dark:border-gray-700 dark:shadow-none">
         <div className="mb-6">
           <MenuSelector 
             menus={menus} 
@@ -449,13 +449,13 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left side: Menu items selection */}
             <div className="md:col-span-1">
-              <h3 className="text-lg font-medium mb-4">Add menu items</h3>
+              <h3 className="text-lg font-medium mb-4 dark:text-gray-200">Add menu items</h3>
               <Tabs defaultValue="pages" className="w-full">
-                <TabsList className="grid grid-cols-4">
-                  <TabsTrigger value="pages">Pages</TabsTrigger>
-                  <TabsTrigger value="posts">Posts</TabsTrigger>
-                  <TabsTrigger value="categories">Categories</TabsTrigger>
-                  <TabsTrigger value="custom">Custom</TabsTrigger>
+                <TabsList className="grid grid-cols-4 dark:bg-gray-800">
+                  <TabsTrigger value="pages" className="dark:data-[state=active]:bg-gray-700 dark:text-gray-300">Pages</TabsTrigger>
+                  <TabsTrigger value="posts" className="dark:data-[state=active]:bg-gray-700 dark:text-gray-300">Posts</TabsTrigger>
+                  <TabsTrigger value="categories" className="dark:data-[state=active]:bg-gray-700 dark:text-gray-300">Categories</TabsTrigger>
+                  <TabsTrigger value="custom" className="dark:data-[state=active]:bg-gray-700 dark:text-gray-300">Custom</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pages">
@@ -599,66 +599,72 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                 <TabsContent value="custom">
                   <div className="space-y-4 mt-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="custom-title">Link Text</Label>
+                      <Label htmlFor="custom-title" className="dark:text-gray-300">Link Text</Label>
                       <Input 
                         id="custom-title" 
                         placeholder="Menu item text" 
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="custom-url">URL</Label>
+                      <Label htmlFor="custom-url" className="dark:text-gray-300">URL</Label>
                       <Input 
                         id="custom-url" 
                         placeholder="https://example.com" 
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="custom-target">Open in</Label>
+                      <Label htmlFor="custom-target" className="dark:text-gray-300">Open in</Label>
                       <Select defaultValue="_self">
-                        <SelectTrigger id="custom-target">
+                        <SelectTrigger id="custom-target" className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                           <SelectValue placeholder="Select target" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_self">Same window</SelectItem>
-                          <SelectItem value="_blank">New window</SelectItem>
+                        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                          <SelectItem value="_self" className="dark:text-gray-200">Same window</SelectItem>
+                          <SelectItem value="_blank" className="dark:text-gray-200">New window</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     {/* Styling Options */}
-                    <div className="border-t pt-4 mt-4">
-                      <h3 className="font-medium text-gray-700 mb-3">Styling Options</h3>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                      <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Styling Options</h3>
                       
                       <div className="grid gap-2">
-                        <Label htmlFor="custom-icon">Icon</Label>
+                        <Label htmlFor="custom-icon" className="dark:text-gray-300">Icon</Label>
                         <Input 
                           id="custom-icon" 
                           placeholder="fa-home or other icon class" 
+                          className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                         />
-                        <p className="text-xs text-gray-500">Enter a Font Awesome or other icon class</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Enter a Font Awesome or other icon class</p>
                       </div>
                       
                       <div className="grid gap-2 mt-3">
-                        <Label htmlFor="custom-css-class">CSS Class</Label>
+                        <Label htmlFor="custom-css-class" className="dark:text-gray-300">CSS Class</Label>
                         <Input 
                           id="custom-css-class" 
                           placeholder="Custom CSS class" 
+                          className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                         />
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4 mt-3">
                         <div className="grid gap-2">
-                          <Label htmlFor="custom-text-color">Text Color</Label>
+                          <Label htmlFor="custom-text-color" className="dark:text-gray-300">Text Color</Label>
                           <Input 
                             id="custom-text-color" 
                             placeholder="#000000 or color name" 
+                            className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="custom-bg-color">Background Color</Label>
+                          <Label htmlFor="custom-bg-color" className="dark:text-gray-300">Background Color</Label>
                           <Input 
                             id="custom-bg-color" 
                             placeholder="#ffffff or color name" 
+                            className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
                           />
                         </div>
                       </div>
@@ -669,7 +675,7 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                           id="custom-highlight"
                           className="mr-2"
                         />
-                        <Label htmlFor="custom-highlight">Highlight this menu item</Label>
+                        <Label htmlFor="custom-highlight" className="dark:text-gray-300">Highlight this menu item</Label>
                       </div>
                     </div>
                     
@@ -734,7 +740,7 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
             {/* Right side: Menu tree */}
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Menu Structure</h3>
+                <h3 className="text-lg font-medium dark:text-gray-200">Menu Structure</h3>
                 <Button onClick={handleSave}>
                   Save Menu
                 </Button>
@@ -762,29 +768,29 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
+              <Label htmlFor="title" className="text-right dark:text-gray-300">
                 Title
               </Label>
               <Input
                 id="title"
                 value={editFormData.title}
                 onChange={(e) => setEditFormData({...editFormData, title: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="url" className="text-right">
+              <Label htmlFor="url" className="text-right dark:text-gray-300">
                 URL
               </Label>
               <Input
                 id="url"
                 value={editFormData.url}
                 onChange={(e) => setEditFormData({...editFormData, url: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">
+              <Label htmlFor="type" className="text-right dark:text-gray-300">
                 Type
               </Label>
               <Select
@@ -793,19 +799,19 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                   setEditFormData({...editFormData, type: value})
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="custom">Custom Link</SelectItem>
-                  <SelectItem value="page">Page</SelectItem>
-                  <SelectItem value="post">Post</SelectItem>
-                  <SelectItem value="category">Category</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="custom" className="dark:text-gray-200">Custom Link</SelectItem>
+                  <SelectItem value="page" className="dark:text-gray-200">Page</SelectItem>
+                  <SelectItem value="post" className="dark:text-gray-200">Post</SelectItem>
+                  <SelectItem value="category" className="dark:text-gray-200">Category</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="target" className="text-right">
+              <Label htmlFor="target" className="text-right dark:text-gray-300">
                 Open in
               </Label>
               <Select
@@ -814,61 +820,61 @@ const MenuManager = ({ menus = [] }: { menus?: Menu[] }) => {
                   setEditFormData({...editFormData, target: value})
                 }
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                   <SelectValue placeholder="Select target" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_self">Same window</SelectItem>
-                  <SelectItem value="_blank">New window</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="_self" className="dark:text-gray-200">Same window</SelectItem>
+                  <SelectItem value="_blank" className="dark:text-gray-200">New window</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="icon" className="text-right">
+              <Label htmlFor="icon" className="text-right dark:text-gray-300">
                 Icon
               </Label>
               <Input
                 id="icon"
                 value={editFormData.icon}
                 onChange={(e) => setEditFormData({...editFormData, icon: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="css_class" className="text-right">
+              <Label htmlFor="css_class" className="text-right dark:text-gray-300">
                 CSS Class
               </Label>
               <Input
                 id="css_class"
                 value={editFormData.css_class}
                 onChange={(e) => setEditFormData({...editFormData, css_class: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="text_color" className="text-right">
+              <Label htmlFor="text_color" className="text-right dark:text-gray-300">
                 Text Color
               </Label>
               <Input
                 id="text_color"
                 value={editFormData.text_color}
                 onChange={(e) => setEditFormData({...editFormData, text_color: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="bg_color" className="text-right">
+              <Label htmlFor="bg_color" className="text-right dark:text-gray-300">
                 Background Color
               </Label>
               <Input
                 id="bg_color"
                 value={editFormData.bg_color}
                 onChange={(e) => setEditFormData({...editFormData, bg_color: e.target.value})}
-                className="col-span-3"
+                className="col-span-3 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="highlight" className="text-right">
+              <Label htmlFor="highlight" className="text-right dark:text-gray-300">
                 Highlight
               </Label>
               <div className="col-span-3">

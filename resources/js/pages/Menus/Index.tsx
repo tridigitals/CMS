@@ -40,10 +40,10 @@ const Index: React.FC<Props> = ({ menus, activeMenu }) => {
       
       <div className="container mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Menu Management</h1>
+          <h1 className="text-2xl font-bold dark:text-white">Menu Management</h1>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-none dark:border dark:border-gray-800">
           <MenuManager menus={menus} activeMenu={activeMenu} />
         </div>
       </div>

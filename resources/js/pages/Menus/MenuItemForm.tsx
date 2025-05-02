@@ -49,21 +49,25 @@ const MenuItemForm = ({ onSubmit }: Props) => {
   });
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800">
       <CardHeader>
-        <CardTitle>Add Menu Item</CardTitle>
+        <CardTitle className="dark:text-gray-300">Add Menu Item</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 dark:text-gray-300">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="dark:text-gray-300">Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Menu item title" {...field} />
+                    <Input
+                      placeholder="Menu item title"
+                      {...field}
+                      className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -75,21 +79,21 @@ const MenuItemForm = ({ onSubmit }: Props) => {
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Type</FormLabel>
+                  <FormLabel className="dark:text-gray-300">Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="custom">Custom Link</SelectItem>
-                      <SelectItem value="page">Page</SelectItem>
-                      <SelectItem value="post">Post</SelectItem>
-                      <SelectItem value="category">Category</SelectItem>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      <SelectItem value="custom" className="dark:text-gray-200">Custom Link</SelectItem>
+                      <SelectItem value="page" className="dark:text-gray-200">Page</SelectItem>
+                      <SelectItem value="post" className="dark:text-gray-200">Post</SelectItem>
+                      <SelectItem value="category" className="dark:text-gray-200">Category</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -102,9 +106,13 @@ const MenuItemForm = ({ onSubmit }: Props) => {
               name="url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL</FormLabel>
+                  <FormLabel className="dark:text-gray-300">URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="Menu item URL" {...field} />
+                    <Input
+                      placeholder="Menu item URL"
+                      {...field}
+                      className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,19 +124,19 @@ const MenuItemForm = ({ onSubmit }: Props) => {
               name="target"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Open in</FormLabel>
+                  <FormLabel className="dark:text-gray-300">Open in</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                         <SelectValue placeholder="Select target" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="_self">Same window</SelectItem>
-                      <SelectItem value="_blank">New window</SelectItem>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      <SelectItem value="_self" className="dark:text-gray-200">Same window</SelectItem>
+                      <SelectItem value="_blank" className="dark:text-gray-200">New window</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -136,7 +144,11 @@ const MenuItemForm = ({ onSubmit }: Props) => {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              disabled={form.formState.isSubmitting}
+            >
               Add Menu Item
             </Button>
           </form>
