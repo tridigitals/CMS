@@ -143,7 +143,7 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
   - Security Enhancements: Add file validation, sanitization, and signed URLs to prevent malicious uploads and enhance security.
   - Seamless Integration and Extensibility: Make media CRUD modular with hooks for plugins, allowing custom media types and behaviors for future extensibility.
   
-- Hari 7: CRUD Menu & Menu Item, integrasi ke layout
+- [x] Hari 7: CRUD Menu & Menu Item, integrasi ke layout
   - **Database Structure:**
     - Tabel `menus`: id, name, slug, description, location, timestamps
     - Tabel `menu_items`: id, menu_id, parent_id, title, url, type, order, target, icon, timestamps
@@ -175,13 +175,13 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
     - Support nested menu, flexible type, reorder & nesting, location-based rendering, cache output, extensible, SEO friendly
 
 **Minggu 2**
-- Hari 8: UI dasar (RadixUI, shadcn/ui), layout, theme switcher
-- Hari 9: Integrasi Inertia.js, routing, protected route
-- Hari 10: Testing unit (PHPUnit), testing komponen React
-- Hari 11: Responsive design, dark/light mode
-- Hari 12: Review & refactor kode
-- Hari 13: Dokumentasi awal (README, struktur folder)
-- Hari 14: Internal demo, feedback, perbaikan
+- [x] Hari 8: UI dasar (RadixUI, shadcn/ui), layout, theme switcher
+- [x] Hari 9: Integrasi Inertia.js, routing, protected route
+- [x] Hari 10: Testing unit (PHPUnit), testing komponen React
+- [x] Hari 11: Responsive design, dark/light mode
+- [x] Hari 12: Review & refactor kode
+- [x] Hari 13: Dokumentasi awal (README, struktur folder)
+- [x] Hari 14: Internal demo, feedback, perbaikan
 
 **Deliverable:** CMS dasar siap CRUD, UI responsif, role & permission berjalan
 
@@ -191,9 +191,24 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 **Minggu 3**
 - Hari 15: Setup modular structure (Nwidart), foldering plugin/theme
 - Hari 16: Plugin registry, auto-discovery, hook system
-- Hari 17: Theme system, customizer, struktur theme
-- Hari 18: Page builder (drag & drop, block model)
-- Hari 19: Integrasi page builder ke page CRUD
+- Hari 17: Theme system implementation:
+  - Struktur dasar theme module (ThemeServiceProvider, Theme model, ThemeManager)
+  - Database schema (themes table, theme_options table)
+  - Template hierarchy system
+  - Integrasi dengan modul Pages, Posts, dan Menu
+  - Theme API untuk frontend
+- Hari 18: Theme customizer dan frontend rendering:
+  - Theme customizer interface di admin panel
+  - Live preview untuk perubahan theme
+  - Widget system untuk sidebar dan area konten
+  - Hook system untuk ekstensi theme
+  - Renderer untuk blok page builder di frontend
+- Hari 19: Page builder dan integrasi:
+  - Implementasi drag & drop interface
+  - Block model dan database structure
+  - Block registry dan custom block API
+  - Integrasi page builder ke page CRUD
+  - Preview system untuk page builder
 - Hari 20: Media manager lanjutan (kategori, bulk, editor)
 - Hari 21: Testing integrasi plugin/theme
 
