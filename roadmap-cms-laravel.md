@@ -188,37 +188,110 @@ Membangun CMS modern, modular, dan scalable berbasis Laravel & React, setara ata
 ---
 
 ### Fase 2: Modular & Plugin System (2 minggu)
-**Minggu 3**
-- Hari 15: Setup modular structure (Nwidart), foldering plugin/theme
-- Hari 16: Plugin registry, auto-discovery, hook system
-- Hari 17: Theme system implementation:
-  - Struktur dasar theme module (ThemeServiceProvider, Theme model, ThemeManager)
-  - Database schema (themes table, theme_options table)
-  - Template hierarchy system
-  - Integrasi dengan modul Pages, Posts, dan Menu
-  - Theme API untuk frontend
-- Hari 18: Theme customizer dan frontend rendering:
-  - Theme customizer interface di admin panel
-  - Live preview untuk perubahan theme
-  - Widget system untuk sidebar dan area konten
-  - Hook system untuk ekstensi theme
-  - Renderer untuk blok page builder di frontend
-- Hari 19: Page builder dan integrasi:
-  - Implementasi drag & drop interface
-  - Block model dan database structure
-  - Block registry dan custom block API
-  - Integrasi page builder ke page CRUD
-  - Preview system untuk page builder
-- Hari 20: Media manager lanjutan (kategori, bulk, editor)
-- Hari 21: Testing integrasi plugin/theme
+**Minggu 3 — Fokus: Setup Modular, Plugin, dan Theme System**
 
-**Minggu 4**
-- Hari 22: Dokumentasi plugin/theme API
-- Hari 23: Review & refactor modular/plugin code
-- Hari 24: Testing plugin/theme (unit & integration)
-- Hari 25: Internal demo, feedback, perbaikan
+### Hari 15: Setup Struktur Modular (Plugin/Theme Separation)
+- Install nwidart/laravel-modules:
+  ```bash
+  composer require nwidart/laravel-modules
+  php artisan vendor:publish --provider="Nwidart\Modules\LaravelModulesServiceProvider"
+  ```
+- Buat folder modular:
+  ```
+  Modules/         # Untuk plugin
+  themes/          # Untuk theme (manual, tidak pakai Nwidart)
+  ```
+- Buat contoh module plugin:
+  ```bash
+  php artisan module:make ContactForm
+  ```
+- Folder theme tetap dibuat manual seperti:
+  ```
+  themes/default/
+  ├── views/
+  ├── assets/
+  └── theme.json
+  ```
 
-**Deliverable:** Plugin/theme system berjalan, page builder siap, media manager advanced
+### Hari 16: Plugin System dan Hook Engine
+- Buat sistem plugin registry:
+  - Scan otomatis module aktif di Modules/
+  - Simpan info plugin aktif di tabel plugins
+  - Plugin bisa diaktifkan/nonaktifkan dari admin panel
+- Buat sistem hook sederhana:
+  - Fungsi add_action($hook, $callback)
+  - Fungsi do_action($hook, $params)
+  - Hook digunakan untuk plugin masuk ke theme, sidebar, menu, dll
+
+### Hari 17: Theme System Implementation (Manual, Non-Nwidart)
+- Struktur dasar:
+  - Buat class ThemeManager di app/Services/ThemeManager.php
+  - Tambahkan ThemeServiceProvider untuk inject view path dinamis dari theme aktif
+  - Buat themes dan theme_options table:
+    ```php
+    themes: id, name, slug, type (blade/react), author, version, status
+    theme_options: id, theme_id, key, value
+    ```
+  - Template hierarchy:
+    - Seperti WordPress, cari page-{slug}.blade.php, fallback ke page.blade.php
+  - Integrasi ke modul:
+    - Pages, Posts, dan Menus harus bisa dirender melalui theme view
+  - Buat Theme API:
+    - Endpoint publik untuk render page/post menggunakan theme view
+
+### Hari 18: Theme Customizer dan Frontend Renderer
+- Buat halaman admin untuk Theme Customizer:
+  - Form untuk mengubah theme_options seperti warna, font, logo
+  - Tambahkan fitur Live Preview:
+    - Simpan perubahan sementara ke session
+    - Preview layout langsung tanpa menyimpan ke database
+  - Buat sistem widget/area:
+    - Misal: sidebar, footer, header-right
+    - Gunakan hook untuk injeksi widget dari plugin
+  - Hook system di theme:
+    - Allow do_action('theme.head'), do_action('theme.sidebar'), dll
+  - Buat BlockRenderer:
+    - Render builder block dari database untuk page-builder
+
+### Hari 19: Page Builder Integration
+- Buat drag & drop page builder:
+  - Gunakan React (di admin panel)
+  - Integrasi dengan Laravel backend via API
+  - Buat blocks table:
+    ```php
+    blocks: id, name, slug, config_schema, render_view
+    ```
+  - Buat block registry:
+    - Mirip plugin hook: register block lewat plugin/theme
+    - Tiap block punya partial blade atau komponen React untuk render
+  - Integrasi ke page CRUD:
+    - Saat user edit halaman, builder bisa digunakan
+    - Simpan struktur block di field content_json
+  - Preview system:
+    - Builder bisa preview langsung di halaman dengan theme yang aktif
+
+### Hari 20: Media Manager Lanjutan
+- Tambah fitur:
+  - Kategori media
+  - Bulk delete/upload
+  - Integrasi media dengan editor WYSIWYG
+  - Plugin bisa gunakan media browser
+
+### Hari 21: Testing & Integrasi Final
+- Pastikan:
+  - Plugin bisa hook ke theme (sidebar/menu)
+  - Theme bisa menggunakan data dari modul Pages & Posts
+  - Builder berfungsi untuk generate halaman frontend
+  - Admin bisa aktifkan theme atau plugin dari UI
+- Buat dokumentasi untuk:
+  - Menambahkan plugin
+  - Membuat theme baru
+  - Menambahkan custom block
+
+## Bonus Rekomendasi
+- Gunakan App\Providers\ThemeServiceProvider untuk inject view path berdasarkan theme aktif
+- Buat facade Theme::view('home') agar lebih rapi
+- Jika ingin React-based theme, buat render.blade.php yang load 1 file React SPA (komunikasi via API)
 
 ---
 
