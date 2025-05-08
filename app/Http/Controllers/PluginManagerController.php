@@ -151,6 +151,9 @@ class PluginManagerController extends Controller
         unset($statuses[$plugin->name]);
         file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+        // Clear routes and optimize after deletion
+        \Artisan::call('route:clear');
+
         return response()->json(['message' => 'Plugin, module, dan tabel migrasi berhasil dihapus']);
     }
 
@@ -188,6 +191,9 @@ class PluginManagerController extends Controller
             $statuses[$plugin->name] = true;
             file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+            // Clear routes and optimize after activation
+            \Artisan::call('route:clear');
+
             return response()->json(['message' => 'Plugin activated successfully']);
         }
         return response()->json(['message' => 'Plugin not found'], 404);
@@ -205,6 +211,9 @@ class PluginManagerController extends Controller
             $statuses = file_exists($statusesPath) ? json_decode(file_get_contents($statusesPath), true) : [];
             $statuses[$plugin->name] = false;
             file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            // Clear routes and optimize after deactivation
+            \Artisan::call('route:clear');
 
             return response()->json(['message' => 'Plugin deactivated successfully']);
         }
