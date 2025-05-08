@@ -26,6 +26,93 @@ class PluginManagerController extends Controller
         return response()->json(['message' => 'Plugin not found'], 404);
     }
 
+    // Aktifkan plugin
+    public function activate($pluginId)
+    {
+        $plugin = Plugin::find($pluginId);
+        if ($plugin) {
+            $plugin->active = true;
+            $plugin->save();
+
+            // Jalankan migration bawaan module jika ada
+            $migrationPath = base_path('Modules/' . $plugin->name . '/database/migrations');
+            if (is_dir($migrationPath)) {
+                \Artisan::call('migrate', [
+                    '--path' => 'Modules/' . $plugin->name . '/database/migrations',
+                    '--force' => true,
+                ]);
+            }
+
+            // Sinkron ke modules_statuses.json
+            $statusesPath = base_path('modules_statuses.json');
+            $statuses = file_exists($statusesPath) ? json_decode(file_get_contents($statusesPath), true) : [];
+            $statuses[$plugin->name] = true;
+            file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            // Clear routes and optimize after activation
+            \Artisan::call('route:clear');
+
+            return response()->json(['message' => 'Plugin activated successfully']);
+        }
+        return response()->json(['message' => 'Plugin not found'], 404);
+    }
+
+    // Nonaktifkan plugin
+    public function deactivate($pluginId)
+    {
+        $plugin = Plugin::find($pluginId);
+        if ($plugin) {
+            $plugin->active = false;
+            $plugin->save();
+
+            // Hapus tabel migrasi plugin
+            try {
+                $migrationPath = base_path("Modules/{$plugin->name}/database/migrations");
+                if (is_dir($migrationPath)) {
+                    // Dapatkan semua file migrasi plugin
+                    $migrations = \DB::table('migrations')
+                        ->where('migration', 'like', "%{$plugin->name}%")
+                        ->get();
+
+                    // Rollback setiap migrasi
+                    foreach ($migrations as $migration) {
+                        \Artisan::call('migrate:rollback', [
+                            '--path' => $migrationPath,
+                            '--force' => true,
+                            '--step' => 1
+                        ]);
+                    }
+
+                    // Hapus record migrasi dari tabel migrations
+                    \DB::table('migrations')
+                        ->where('migration', 'like', "%{$plugin->name}%")
+                        ->delete();
+                }
+            } catch (\Exception $e) {
+                \Log::error('Rollback failed for plugin ' . $plugin->name . ': ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'Failed to rollback migrations',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+            // Update modules_statuses.json
+            $statusesPath = base_path('modules_statuses.json');
+            if (file_exists($statusesPath)) {
+                $statuses = json_decode(file_get_contents($statusesPath), true);
+                $statuses[$plugin->name] = false;
+                file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            }
+
+            return response()->json([
+                'message' => 'Plugin deactivated successfully',
+                'migrations' => \DB::table('migrations')->get()
+            ]);
+        }
+
+        return response()->json(['message' => 'Plugin not found'], 404);
+    }
+
     // Upload & install plugin (ZIP)
     public function install(Request $request)
     {
@@ -90,6 +177,40 @@ class PluginManagerController extends Controller
             ]
         );
 
+        // Pindahkan semua file dan direktori dari module pages ke main pages
+        $pagesDir = base_path('resources/js/pages');
+        $modulePagesDir = $targetDir . '/resources/js/pages';
+
+        if (is_dir($modulePagesDir)) {
+            // Pindahkan semua file
+            $files = glob($modulePagesDir . '/*');
+            foreach ($files as $file) {
+                $filename = basename($file);
+                $targetFile = $pagesDir . '/' . $filename;
+
+                // Hapus file/direktori yang lama jika ada
+                if (file_exists($targetFile)) {
+                    if (is_dir($targetFile)) {
+                        $this->deleteDirectory($targetFile);
+                    } else {
+                        unlink($targetFile);
+                    }
+                }
+
+                // Pindahkan file/direktori
+                if (!rename($file, $targetFile)) {
+                    return response()->json([
+                        'message' => "Gagal memindahkan $filename ke main pages directory",
+                        'error' => error_get_last()
+                    ], 500);
+                }
+            }
+        }
+
+        // Clear routes
+        \Artisan::call('route:clear');
+
+
         // Update modules_statuses.json
         $statusesPath = base_path('modules_statuses.json');
         $statuses = file_exists($statusesPath) ? json_decode(file_get_contents($statusesPath), true) : [];
@@ -103,6 +224,8 @@ class PluginManagerController extends Controller
 
         return response()->json(['message' => 'Plugin berhasil diinstall']);
     }
+
+    
 
     // Update plugin (upload ZIP baru)
     public function update(Request $request, $pluginId)
@@ -142,6 +265,12 @@ class PluginManagerController extends Controller
             $this->deleteDirectory($moduleDir);
         }
 
+        // Hapus folder module's directory from main pages directory
+        $pagesDir = base_path('resources/js/pages/' . $plugin->name);
+        if (is_dir($pagesDir)) {
+            $this->deleteDirectory($pagesDir);
+        }
+
         // Hapus dari DB
         $plugin->delete();
 
@@ -169,54 +298,6 @@ class PluginManagerController extends Controller
         return rmdir($dir);
     }
 
-    public function activate($pluginId)
-    {
-        $plugin = Plugin::find($pluginId);
-        if ($plugin) {
-            $plugin->active = true;
-            $plugin->save();
+    
 
-            // Jalankan migration bawaan module jika ada
-            $migrationPath = base_path('Modules/' . $plugin->name . '/database/migrations');
-            if (is_dir($migrationPath)) {
-                \Artisan::call('migrate', [
-                    '--path' => 'Modules/' . $plugin->name . '/database/migrations',
-                    '--force' => true,
-                ]);
-            }
-
-            // Sinkron ke modules_statuses.json
-            $statusesPath = base_path('modules_statuses.json');
-            $statuses = file_exists($statusesPath) ? json_decode(file_get_contents($statusesPath), true) : [];
-            $statuses[$plugin->name] = true;
-            file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-            // Clear routes and optimize after activation
-            \Artisan::call('route:clear');
-
-            return response()->json(['message' => 'Plugin activated successfully']);
-        }
-        return response()->json(['message' => 'Plugin not found'], 404);
-    }
-
-    public function deactivate($pluginId)
-    {
-        $plugin = Plugin::find($pluginId);
-        if ($plugin) {
-            $plugin->active = false;
-            $plugin->save();
-
-            // Sinkron ke modules_statuses.json
-            $statusesPath = base_path('modules_statuses.json');
-            $statuses = file_exists($statusesPath) ? json_decode(file_get_contents($statusesPath), true) : [];
-            $statuses[$plugin->name] = false;
-            file_put_contents($statusesPath, json_encode($statuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-            // Clear routes and optimize after deactivation
-            \Artisan::call('route:clear');
-
-            return response()->json(['message' => 'Plugin deactivated successfully']);
-        }
-        return response()->json(['message' => 'Plugin not found'], 404);
-    }
 }

@@ -97,13 +97,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('menu-items', [\App\Http\Controllers\MenuItemController::class, 'store'])->middleware('can:manage menus');
     Route::post('menu-items/{menuItem}/move', [\App\Http\Controllers\MenuItemController::class, 'move'])->middleware('can:manage menus');
     Route::delete('menu-items/{menuItem}', [\App\Http\Controllers\MenuItemController::class, 'destroy'])->middleware('can:manage menus');
+    
     Route::get('plugin-manager', [\App\Http\Controllers\PluginManagerController::class, 'index'])->name('plugin-manager.index');
-Route::get('plugin-manager/{plugin}', [\App\Http\Controllers\PluginManagerController::class, 'show'])->name('plugin-manager.show');
-Route::post('plugin-manager/install', [\App\Http\Controllers\PluginManagerController::class, 'install'])->name('plugin-manager.install');
-Route::post('plugin-manager/{plugin}/update', [\App\Http\Controllers\PluginManagerController::class, 'update'])->name('plugin-manager.update');
-Route::delete('plugin-manager/{plugin}', [\App\Http\Controllers\PluginManagerController::class, 'destroy'])->name('plugin-manager.destroy');
-Route::post('plugin-manager/{plugin}/activate', [\App\Http\Controllers\PluginManagerController::class, 'activate'])->name('plugin-manager.activate');
-Route::post('plugin-manager/{plugin}/deactivate', [\App\Http\Controllers\PluginManagerController::class, 'deactivate'])->name('plugin-manager.deactivate');
+    Route::get('plugin-manager/{plugin}', [\App\Http\Controllers\PluginManagerController::class, 'show'])->name('plugin-manager.show');
+    Route::post('plugin-manager/install', [\App\Http\Controllers\PluginManagerController::class, 'install'])->name('plugin-manager.install');
+    Route::post('plugin-manager/{plugin}/update', [\App\Http\Controllers\PluginManagerController::class, 'update'])->name('plugin-manager.update');
+    Route::delete('plugin-manager/{plugin}', [\App\Http\Controllers\PluginManagerController::class, 'destroy'])->name('plugin-manager.destroy');
+    Route::post('plugin-manager/{plugin}/activate', [\App\Http\Controllers\PluginManagerController::class, 'activate'])->name('plugin-manager.activate');
+    Route::post('plugin-manager/{plugin}/deactivate', [\App\Http\Controllers\PluginManagerController::class, 'deactivate'])->name('plugin-manager.deactivate');
 });
 
 require __DIR__.'/settings.php';
